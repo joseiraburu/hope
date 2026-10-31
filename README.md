@@ -72,7 +72,7 @@ iscc /DMyAppVersion=0.1.0 installer\hope.iss   # instalador de Windows (Inno Set
 flutter build ios --release        # iOS (en un Mac, con cuenta de Apple Developer)
 ```
 
-**Compilación automática:** cada cambio en `main` ejecuta las pruebas y genera el APK y el instalador de Windows (pestaña *Actions*, sección *Artifacts*). Al crear una etiqueta `vX.Y.Z` se publica una versión descargable en *Releases*.
+**Compilación automática:** cada cambio en `main` ejecuta las pruebas y genera el APK y el instalador de Windows (pestaña *Actions*, sección *Artifacts*). Para publicar una versión descargable en *Releases*: pestaña *Actions* → «Compilar HOPE» → «Run workflow» → marcar «Publicar versión» (usa el número de `version` de `pubspec.yaml`).
 
 **Firma de Android:** para que cada versión se pueda instalar encima de la anterior sin perder datos, todas deben firmarse con la misma clave. Guarda la clave (keystore con alias `androiddebugkey` y contraseñas `android`) codificada en base64 en el secreto del repositorio `ANDROID_KEYSTORE_BASE64`. Sin ese secreto, cada compilación usa una clave temporal.
 

@@ -2,8 +2,9 @@
 #   - análisis y pruebas
 #   - APK de Android
 #   - instalador y versión portable de Windows
-# Al crear una etiqueta "v0.1.0", "v0.2.0"..., publica una versión descargable
-# en la pestaña «Releases» del repositorio.
+# Para publicar una versión descargable en «Releases»: pestaña Actions →
+# «Compilar HOPE» → «Run workflow» → marcar «Publicar versión». También se
+# publica al subir una etiqueta "v0.1.0", "v0.2.0"...
 name: Compilar HOPE
 
 on:
@@ -12,6 +13,11 @@ on:
     tags: ['v*']
   pull_request:
   workflow_dispatch:
+    inputs:
+      publicar:
+        description: 'Publicar versión descargable en Releases'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -142,7 +148,7 @@ jobs:
 
   publicar:
     name: Publicar versión
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.publicar
     needs: [android, windows]
     runs-on: ubuntu-latest
     steps:
@@ -156,7 +162,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           ls -la dist
-          gh release create "$GITHUB_REF_NAME" dist/* \
-            --title "HOPE ${GITHUB_REF_NAME#v}" \
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            TAG="$GITHUB_REF_NAME"
+          else
+            TAG="v$(grep '^version:' pubspec.yaml | sed 's/version: *//; s/+.*//')"
+          fi
+          gh release create "$TAG" dist/* \
+            --target "$GITHUB_SHA" \
+            --title "HOPE ${TAG#v}" \
             --notes-file docs/notas-version.md \
             --prerelease
