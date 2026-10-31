@@ -50,7 +50,8 @@ jobs:
           channel: stable
           cache: true
       - name: Versión
-        run: echo "VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: *//; s/+.*//')" >> "$GITHUB_ENV"
+        run: |
+          echo "VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: *//; s/+.*//')" >> "$GITHUB_ENV"
       - name: Clave de firma estable
         # Si existe el secreto ANDROID_KEYSTORE_BASE64, todas las versiones se
         # firman con la misma clave y se pueden actualizar sin desinstalar.
@@ -87,7 +88,8 @@ jobs:
           cache: true
       - name: Versión
         shell: bash
-        run: echo "VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: *//; s/+.*//')" >> "$GITHUB_ENV"
+        run: |
+          echo "VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: *//; s/+.*//')" >> "$GITHUB_ENV"
       - name: Preparar plataformas
         shell: bash
         run: bash tool/preparar_plataformas.sh
