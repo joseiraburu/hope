@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hope/app.dart';
 import 'package:hope/animation/body_painter.dart';
 import 'package:hope/models/app_settings.dart';
+import 'package:hope/screens/history_screen.dart';
 
 import 'helpers.dart';
 
@@ -70,9 +71,14 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
     await tester.tap(find.text('Registrar'));
     await tester.pump(const Duration(milliseconds: 100));
+    expect(controller.records.length, 1);
+
     await tester.tap(find.text('Histórico'));
-    await tester.pump(const Duration(milliseconds: 600));
-    expect(find.textContaining('Dolor 0/10'), findsOneWidget);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.byType(HistoryScreen), findsOneWidget);
+    expect(find.byType(Card), findsOneWidget);
+    expect(find.textContaining('0/10'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 
