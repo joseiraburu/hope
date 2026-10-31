@@ -33,7 +33,7 @@ jobs:
       - run: flutter --version
       - run: flutter pub get
       - run: flutter analyze --no-fatal-infos --no-fatal-warnings
-      - run: flutter test
+      - run: flutter test --reporter github
 
   android:
     name: Android (APK)
@@ -66,7 +66,14 @@ jobs:
             echo "::warning::Sin secreto ANDROID_KEYSTORE_BASE64: el APK se firma con una clave temporal."
           fi
       - run: bash tool/preparar_plataformas.sh
-      - run: flutter build apk --release
+      - name: Compilar APK
+        run: |
+          set -o pipefail
+          flutter build apk --release 2>&1 | tee build.log
+      - name: Mostrar el error de compilación
+        if: failure()
+        run: |
+          echo "::error title=Android::$(tail -n 80 build.log 2>/dev/null | sed -e 's/%/%25/g' -e 's/\r//g' | sed ':a;N;$!ba;s/\n/%0A/g')"
       - run: |
           mkdir -p dist
           cp build/app/outputs/flutter-apk/app-release.apk "dist/HOPE-${VERSION}-android.apk"
@@ -93,7 +100,16 @@ jobs:
       - name: Preparar plataformas
         shell: bash
         run: bash tool/preparar_plataformas.sh
-      - run: flutter build windows --release
+      - name: Compilar Windows
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter build windows --release 2>&1 | tee build.log
+      - name: Mostrar el error de compilación
+        if: failure()
+        shell: bash
+        run: |
+          echo "::error title=Windows::$(tail -n 80 build.log 2>/dev/null | sed -e 's/%/%25/g' -e 's/\r//g' | sed ':a;N;$!ba;s/\n/%0A/g')"
       - name: Incluir las bibliotecas de Visual C++
         shell: pwsh
         run: |
