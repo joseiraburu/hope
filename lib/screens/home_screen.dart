@@ -115,6 +115,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     messenger.hideCurrentSnackBar();
     messenger.showSnackBar(SnackBar(
       content: Text(s.registered),
+      behavior: SnackBarBehavior.floating,
+      margin: _snackMargin,
       action: SnackBarAction(
         label: s.addNote,
         onPressed: () => editRecordNote(context, record),
@@ -126,8 +128,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     final s = AppScope.read(context).strings;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(s.videoComingSoon)));
+      ..showSnackBar(SnackBar(
+        content: Text(s.videoComingSoon),
+        behavior: SnackBarBehavior.floating,
+        margin: _snackMargin,
+      ));
   }
+
+  /// Los avisos flotan por encima de la barra de botones para no taparla.
+  static const _snackMargin = EdgeInsets.fromLTRB(12, 0, 12, 92);
 
   Future<void> _openHistory() async {
     final chosen = await Navigator.of(context).push<PainRecord>(

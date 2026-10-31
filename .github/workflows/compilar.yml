@@ -40,7 +40,7 @@ jobs:
       - name: Mostrar las pruebas fallidas
         if: failure()
         run: |
-          echo "::error title=Pruebas::$( (grep -A 70 '\[E\]' test.log || tail -n 80 test.log) | head -n 150 | sed -e 's/%/%25/g' -e 's/\r//g' | sed ':a;N;$!ba;s/\n/%0A/g')"
+          echo "::error title=Pruebas::$( (grep -B 60 -A 6 '\[E\]' test.log || tail -n 80 test.log) | head -n 160 | sed -e 's/%/%25/g' -e 's/\r//g' | sed ':a;N;$!ba;s/\n/%0A/g')"
 
   android:
     name: Android (APK)
