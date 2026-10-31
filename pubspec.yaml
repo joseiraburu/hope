@@ -1,0 +1,45 @@
+name: hope
+description: "HOPE: registro visual del dolor neuropático crónico. Software libre (GPL-3.0)."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  path_provider: ^2.1.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: any
+  flutter_launcher_icons: any
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/config/hope_config.json
+    - assets/config/body_geometry.json
+
+# Iconos de la app para Android, iOS, Windows y web.
+# Se generan con: dart run flutter_launcher_icons
+flutter_launcher_icons:
+  image_path: "assets/icon/icono-app-1024.png"
+  android: "launcher_icon"
+  adaptive_icon_background: "#FAF8F5"
+  adaptive_icon_foreground: "assets/icon/icono-adaptativo.png"
+  ios: true
+  remove_alpha_ios: true
+  windows:
+    generate: true
+    image_path: "assets/icon/icono-app-1024.png"
+    icon_size: 256
+  web:
+    generate: true
+    image_path: "assets/icon/icono-app-1024.png"
+    background_color: "#FAF8F5"
+    theme_color: "#3D5A80"

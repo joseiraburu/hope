@@ -1,0 +1,35 @@
+{
+  "loopSeconds": 10,
+  "frequency": { "min": 10, "max": 500, "default": 60 },
+  "colors": {
+    "painLight": "#FF8A80",
+    "painDeep": "#D50000",
+    "accent": "#3D5A80",
+    "backgroundLight": "#FAF8F5",
+    "backgroundDark": "#121212"
+  },
+  "zones": [
+    { "id": "pies",         "es": "Pies",         "en": "Feet",       "pct": 7,   "views": ["front", "back"] },
+    { "id": "pantorrillas", "es": "Pantorrillas", "en": "Calves",     "pct": 14,  "views": ["front", "back"] },
+    { "id": "muslos",       "es": "Muslos",       "en": "Thighs",     "pct": 19,  "views": ["front", "back"] },
+    { "id": "gluteos",      "es": "Glúteos",      "en": "Buttocks",   "pct": 5,   "views": ["back"] },
+    { "id": "perineo",      "es": "Perineo",      "en": "Perineum",   "pct": 1,   "views": ["front"] },
+    { "id": "abdomen",      "es": "Abdomen",      "en": "Abdomen",    "pct": 6.5, "views": ["front"] },
+    { "id": "pecho",        "es": "Pecho",        "en": "Chest",      "pct": 6.5, "views": ["front"] },
+    { "id": "lumbar",       "es": "Lumbar",       "en": "Lower back", "pct": 5,   "views": ["back"] },
+    { "id": "espalda",      "es": "Espalda",      "en": "Upper back", "pct": 5,   "views": ["back"] },
+    { "id": "hombros",      "es": "Hombros",      "en": "Shoulders",  "pct": 3,   "views": ["front", "back"] },
+    { "id": "brazos",       "es": "Brazos",       "en": "Arms",       "pct": 14,  "views": ["front", "back"] },
+    { "id": "manos",        "es": "Manos",        "en": "Hands",      "pct": 5,   "views": ["front", "back"] },
+    { "id": "cara",         "es": "Cara",         "en": "Face",       "pct": 3.5, "views": ["front"] },
+    { "id": "cabeza",       "es": "Cabeza",       "en": "Head",       "pct": 3.5, "views": ["front", "back"] }
+  ],
+  "eventTypes": [
+    { "id": "pinchazo",  "es": "Pinchazo",  "en": "Prick",    "color": "#FFF176" },
+    { "id": "quemazon",  "es": "Quemazón",  "en": "Burning",  "color": "#FF9100" },
+    { "id": "rasgadura", "es": "Rasgadura", "en": "Tearing",  "color": "#FF5252" },
+    { "id": "aranazo",   "es": "Arañazo",   "en": "Scratch",  "color": "#FF80AB" },
+    { "id": "punzada",   "es": "Punzada",   "en": "Stabbing", "color": "#82B1FF" },
+    { "id": "golpe",     "es": "Golpe",     "en": "Blow",     "color": "#FFFFFF" }
+  ]
+}

@@ -1,0 +1,34 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+
+# Carpetas de plataforma: se generan en la compilación (tool/preparar_plataformas.sh)
+/android/
+/ios/
+/windows/
+/web/
+/linux/
+/macos/
+.metadata
+
+# Resultados de compilación
+dist/
+
+# Claves de firma (nunca subirlas al repositorio)
+*.jks
+*.keystore
+key.properties
+
+# Editores y sistema
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+__pycache__/

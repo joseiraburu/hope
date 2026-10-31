@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-40 -45 356 616" width="356" height="616">
+  <title>Logo con óvalo</title>
+  <g fill="none" stroke="#1A1A1A" stroke-width="16" stroke-linecap="round">
+    <!-- Óvalo exterior -->
+    <ellipse cx="138" cy="263" rx="150" ry="280"/>
+    <!-- Símbolo original -->
+    <line x1="72.5" y1="38" x2="72.5" y2="488"/>
+    <ellipse cx="141.5" cy="262.5" rx="61.5" ry="96.5"/>
+    <line x1="72.5" y1="262.5" x2="138" y2="262.5"/>
+  </g>
+</svg>
