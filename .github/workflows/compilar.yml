@@ -25,7 +25,7 @@ jobs:
     name: Análisis y pruebas
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -47,8 +47,8 @@ jobs:
     needs: pruebas
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -95,7 +95,7 @@ jobs:
     needs: pruebas
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -146,7 +146,7 @@ jobs:
     needs: [android, windows]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/download-artifact@v4
         with:
           path: dist
@@ -158,4 +158,5 @@ jobs:
           ls -la dist
           gh release create "$GITHUB_REF_NAME" dist/* \
             --title "HOPE ${GITHUB_REF_NAME#v}" \
-            --notes-file docs/notas-version.md
+            --notes-file docs/notas-version.md \
+            --prerelease
