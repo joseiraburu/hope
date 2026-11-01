@@ -60,6 +60,13 @@ Future<void> capture(WidgetTester tester, String name) async {
   file.writeAsBytesSync(bytes!);
 }
 
+/// Avanza varios fotogramas para que terminen las transiciones.
+Future<void> settle(WidgetTester tester, {int frames = 8}) async {
+  for (var i = 0; i < frames; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+}
+
 Widget shot(AppController controller) =>
     RepaintBoundary(key: _shotKey, child: HopeApp(controller: controller));
 
@@ -113,8 +120,7 @@ void main() {
     await tester.pumpWidget(shot(controller));
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.text('Zonas'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 600));
+    await settle(tester);
     await capture(tester, '03_hoja_zonas');
   });
 
@@ -177,20 +183,17 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     final nav = tester.state<NavigatorState>(find.byType(Navigator).first);
     nav.push(MaterialPageRoute(builder: (_) => const TreatmentsScreen()));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 600));
+    await settle(tester);
     await capture(tester, '10_tratamientos');
 
     showCompareSheet(tester.element(find.byType(TreatmentsScreen)), treatments.first);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 600));
+    await settle(tester);
     await capture(tester, '11_antes_despues');
     nav.pop();
-    await tester.pump(const Duration(milliseconds: 600));
+    await settle(tester);
 
     nav.push(MaterialPageRoute(builder: (_) => TreatmentEditorScreen(editing: treatments[1])));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 600));
+    await settle(tester);
     await capture(tester, '12_editor_tratamiento');
   });
 }

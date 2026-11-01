@@ -41,6 +41,14 @@ PainRecord rec(DateTime at, int pain, {int events = 5, int freq = 100, double su
       seed: 1,
     );
 
+/// Avanza varios fotogramas (no se puede usar pumpAndSettle porque la
+/// silueta se anima sin parar).
+Future<void> settle(WidgetTester tester) async {
+  for (var i = 0; i < 8; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+}
+
 void main() {
   test('un tratamiento se guarda y se recupera igual (JSON)', () {
     final t = lido(end: DateTime(2026, 10, 13, 10));
@@ -149,19 +157,19 @@ void main() {
     await tester.pumpWidget(HopeApp(controller: c));
     await tester.pump(const Duration(milliseconds: 100));
     await tester.tap(find.byIcon(Icons.more_vert));
-    await tester.pump(const Duration(milliseconds: 400));
+    await settle(tester);
     await tester.tap(find.text('Tratamientos').last);
-    await tester.pump(const Duration(milliseconds: 600));
+    await settle(tester);
     expect(find.textContaining('Todavía no hay tratamientos'), findsOneWidget);
     await tester.tap(find.text('Añadir tratamiento').last);
-    await tester.pump(const Duration(milliseconds: 600));
+    await settle(tester);
     // Sin dosis no se guarda.
     await tester.tap(find.widgetWithText(TextButton, 'Guardar'));
     await tester.pump();
     expect(find.text('Escribe una dosis mayor que 0'), findsOneWidget);
     await tester.enterText(find.widgetWithText(TextField, 'Dosis'), '300');
     await tester.tap(find.widgetWithText(TextButton, 'Guardar'));
-    await tester.pump(const Duration(milliseconds: 600));
+    await settle(tester);
     expect(c.treatments.length, 1);
     expect(c.treatments.single.medicationId, 'lidocaina');
     expect(c.treatments.single.route, 'iv');
