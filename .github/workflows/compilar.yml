@@ -179,6 +179,7 @@ jobs:
           path: dist/*
           if-no-files-found: error
       - name: Probar el vídeo MP4 (Media Foundation)
+        timeout-minutes: 30
         shell: bash
         run: bash tool/prueba_video.sh windows "$(pwd -W)/build/muestras_video"
       - uses: actions/setup-python@v5
@@ -221,6 +222,9 @@ jobs:
           detalle=$( (grep -E -A 4 '^e: |error:|What went wrong' build.log | head -n 80; echo ----; tail -n 40 build.log) 2>/dev/null)
           echo "::error title=Android (prueba)::$(printf '%s\n' "$detalle" | sed -e 's/%/%25/g' -e 's/\r//g' | sed ':a;N;$!ba;s/\n/%0A/g')"
       - name: Emulador y prueba del vídeo
+        # Cada intento de la prueba tiene su propio límite (tool/prueba_video.sh);
+        # este es el máximo para todo el paso, arranque del emulador incluido.
+        timeout-minutes: 30
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
