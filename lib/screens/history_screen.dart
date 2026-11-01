@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../animation/pain_scene.dart';
 import '../core/body_geometry.dart';
 import '../core/config.dart';
+import '../export/record_share.dart';
 import '../models/pain_record.dart';
 import '../state/app_controller.dart';
 import '../state/pain_state.dart';
@@ -16,7 +17,7 @@ import 'home_screen.dart';
 import 'record_player_screen.dart';
 
 /// Acciones posibles sobre un registro del histórico.
-enum RecordAction { edit, duplicate, delete }
+enum RecordAction { edit, duplicate, share, delete }
 
 /// Lista de registros, del más reciente al más antiguo.
 ///
@@ -104,6 +105,8 @@ class _HistoryScreenState extends State<HistoryScreen> with SingleTickerProvider
         );
       case RecordAction.duplicate:
         Navigator.of(context).pop(record);
+      case RecordAction.share:
+        await showRecordShareSheet(context, record);
       case RecordAction.delete:
         final ok = await confirmAction(
           context,
@@ -282,6 +285,7 @@ class _RecordTile extends StatelessWidget {
                 itemBuilder: (_) => [
                   PopupMenuItem(value: RecordAction.edit, child: Text(s.edit)),
                   PopupMenuItem(value: RecordAction.duplicate, child: Text(s.duplicate)),
+                  PopupMenuItem(value: RecordAction.share, child: Text(s.share)),
                   PopupMenuItem(value: RecordAction.delete, child: Text(s.delete)),
                 ],
               ),

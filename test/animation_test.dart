@@ -14,7 +14,7 @@ void main() {
   List<Spark> gen({int seed = 42, int freq = 120, List<String>? types}) => generateSparks(
         config: config,
         seed: seed,
-        zones: const ['pies', 'manos', 'muslos'],
+        zones: const ['pies_izq', 'manos_der', 'muslos_izq'],
         frequency: freq,
         eventIntensity: 7,
         eventTypes: types ?? const ['pinchazo', 'quemazon', 'golpe'],
@@ -67,7 +67,7 @@ void main() {
         generateSparks(
             config: config,
             seed: 1,
-            zones: const ['pies'],
+            zones: const ['pies_izq'],
             frequency: 100,
             eventIntensity: 0,
             eventTypes: const ['golpe']),
@@ -76,7 +76,7 @@ void main() {
         generateSparks(
             config: config,
             seed: 1,
-            zones: const ['pies'],
+            zones: const ['pies_izq'],
             frequency: 100,
             eventIntensity: 5,
             eventTypes: const []),
@@ -102,7 +102,7 @@ void main() {
     final scene = PainScene(
       config: config,
       painIntensity: 6,
-      zones: const ['pies', 'pecho'],
+      zones: const ['pies_izq', 'pies_der', 'pecho'],
       eventIntensity: 5,
       eventTypes: const ['pinchazo'],
       frequency: 300,
@@ -118,13 +118,47 @@ void main() {
     final again = PainScene(
       config: config,
       painIntensity: 6,
-      zones: const ['pecho', 'pies'],
+      zones: const ['pecho', 'pies_der', 'pies_izq'],
       eventIntensity: 5,
       eventTypes: const ['pinchazo'],
       frequency: 300,
       seed: 7,
     ).positionsFor(front);
     expect(again, pos);
+  });
+
+  test('la imagen de 1 minuto tiene tantas chispas como la frecuencia', () {
+    for (final f in [10, 120, 500]) {
+      final scene = PainScene(
+        config: config,
+        painIntensity: 5,
+        zones: const ['manos_izq', 'pies_der'],
+        eventIntensity: 6,
+        eventTypes: const ['pinchazo', 'golpe'],
+        frequency: f,
+        seed: 3,
+      );
+      expect(scene.sparks.length, (f * 10 / 60).round());
+      final minute = scene.oneMinute();
+      expect(minute.sparks.length, f);
+      expect(minute.loopSeconds, 60);
+      // Determinista: la misma escena da las mismas chispas.
+      expect(minute.sparks.map((s) => s.start).toList(),
+          scene.oneMinute().sparks.map((s) => s.start).toList());
+    }
+  });
+
+  test('las chispas solo caen en los lados marcados', () {
+    final scene = PainScene(
+      config: config,
+      painIntensity: 5,
+      zones: const ['manos_izq'],
+      eventIntensity: 6,
+      eventTypes: const ['pinchazo'],
+      frequency: 300,
+      seed: 11,
+    );
+    expect(scene.sparks.every((s) => s.zone == 'manos_izq'), isTrue);
   });
 
   test('el pulso encaja un número entero de latidos en el bucle', () {

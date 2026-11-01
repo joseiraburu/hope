@@ -152,8 +152,22 @@ CALF_IN = catmull([K1, (91.5, 420), (89, 445), (86, 470), A1])
 FOOT_FRONT = catmull([A1, (86.5, 499), (88, 508), (85, 513), (67, 513), (63, 508), (66.5, 499), A0])
 FOOT_BACK = catmull([A1, (86, 500), (84.5, 510), (77, 513), (69.5, 510), (68, 500), A0])
 FOLD = catmull([G0, (62, 313.5), (76, 316.5), (90, 315), (98, 310)], n=6)
-HEAD = ellipse(100, 36, 23, 29)
-NECK = [(91, 56), (109, 56), (110, 83), (90, 83)]
+HEAD_C, HEAD_RX, HEAD_RY = (100, 36), 23, 29
+HEAD = ellipse(HEAD_C[0], HEAD_C[1], HEAD_RX, HEAD_RY)
+
+
+def neck_polygon(T):
+    """Cuello: desde la barbilla (borde inferior de la cabeza) hasta el pecho."""
+    bl = T([(90, 80)])[0]
+    br = T([(110, 80)])[0]
+    x0 = 100 - (100 - bl[0]) * 0.92
+    x1 = 100 + (br[0] - 100) * 0.92
+    top = []
+    for i in range(9):
+        x = x0 + (x1 - x0) * i / 8
+        k = max(0.0, 1 - ((x - HEAD_C[0]) / HEAD_RX) ** 2)
+        top.append((x, HEAD_C[1] + HEAD_RY * math.sqrt(k)))
+    return top + [br, bl]
 
 
 def sym(left):
@@ -164,6 +178,19 @@ def sym(left):
 def pair(left):
     left = dedupe(left)
     return [left, mirror(left)]
+
+
+# Zonas pares: cada lado es una zona propia. Izquierda y derecha son las del
+# paciente: en la vista frontal la figura está de cara, así que su lado
+# derecho queda a la izquierda de la pantalla; en la posterior coinciden.
+def add_sides(zones, zone_id, polys, f, view):
+    screen_left, screen_right = [f(p) for p in polys]
+    if view == "front":
+        zones[zone_id + "_izq"] = [screen_right]
+        zones[zone_id + "_der"] = [screen_left]
+    else:
+        zones[zone_id + "_izq"] = [screen_left]
+        zones[zone_id + "_der"] = [screen_right]
 
 
 def build(sex):
@@ -194,39 +221,37 @@ def build(sex):
     def tz(polys, f):
         return [f(p) for p in polys]
 
-    front = {
-        "base": [T(NECK)],
-        "zones": {
-            "cabeza": [head_cap],
-            "cara": [face],
-            "hombros": tz(pair(shoulder), A),
-            "pecho": [T(chest)],
-            "abdomen": [T(abdomen)],
-            "perineo": [T(perineum)],
-            "brazos": tz(pair(arm), A),
-            "manos": tz(pair(hand), A),
-            "muslos": tz(pair(thigh_front), T),
-            "pantorrillas": tz(pair(calf), T),
-            "pies": tz(pair(FOOT_FRONT), T),
-        },
-        "decor": [],
-    }
-    back = {
-        "base": [T(NECK)],
-        "zones": {
-            "cabeza": [HEAD],
-            "hombros": tz(pair(shoulder), A),
-            "espalda": [T(back_upper)],
-            "lumbar": [T(lumbar)],
-            "gluteos": tz(pair(glute), T),
-            "brazos": tz(pair(arm), A),
-            "manos": tz(pair(hand), A),
-            "muslos": tz(pair(thigh_back), T),
-            "pantorrillas": tz(pair(calf), T),
-            "pies": tz(pair(FOOT_BACK), T),
-        },
-        "decor": [],
-    }
+    neck = neck_polygon(T)
+
+    fz = {}
+    fz["cuello_delante"] = [neck]
+    fz["cabeza"] = [head_cap]
+    fz["cara"] = [face]
+    add_sides(fz, "hombros", pair(shoulder), A, "front")
+    fz["pecho"] = [T(chest)]
+    fz["abdomen"] = [T(abdomen)]
+    fz["perineo"] = [T(perineum)]
+    add_sides(fz, "brazos", pair(arm), A, "front")
+    add_sides(fz, "manos", pair(hand), A, "front")
+    add_sides(fz, "muslos", pair(thigh_front), T, "front")
+    add_sides(fz, "pantorrillas", pair(calf), T, "front")
+    add_sides(fz, "pies", pair(FOOT_FRONT), T, "front")
+
+    bz = {}
+    bz["cuello_detras"] = [neck]
+    bz["cabeza"] = [HEAD]
+    add_sides(bz, "hombros", pair(shoulder), A, "back")
+    bz["espalda"] = [T(back_upper)]
+    bz["lumbar"] = [T(lumbar)]
+    add_sides(bz, "gluteos", pair(glute), T, "back")
+    add_sides(bz, "brazos", pair(arm), A, "back")
+    add_sides(bz, "manos", pair(hand), A, "back")
+    add_sides(bz, "muslos", pair(thigh_back), T, "back")
+    add_sides(bz, "pantorrillas", pair(calf), T, "back")
+    add_sides(bz, "pies", pair(FOOT_BACK), T, "back")
+
+    front = {"base": [], "zones": fz, "decor": []}
+    back = {"base": [], "zones": bz, "decor": []}
 
     # Detalles que distinguen la silueta: pecho / pectorales e ingles.
     if sex == "female":
@@ -255,7 +280,8 @@ def rounded(obj):
 
 
 # ------------------------------------------------------------ vista previa
-def svg_preview(geo, path, highlight=("pecho", "manos", "pies", "lumbar", "muslos")):
+def svg_preview(geo, path, highlight=("pecho", "manos_izq", "pies_izq", "pies_der", "lumbar",
+                                      "muslos_der", "cuello_delante", "cuello_detras")):
     panels = [("female", "front"), ("female", "back"), ("male", "front"), ("male", "back")]
     parts = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W * 4 + 50} {H + 40}" '
              f'width="{(W * 4 + 50) * 2}" height="{(H + 40) * 2}">',
@@ -270,6 +296,10 @@ def svg_preview(geo, path, highlight=("pecho", "manos", "pies", "lumbar", "muslo
         parts.append(f'<g transform="translate({10 + i * (W + 10)},20)">')
         parts.append(f'<text x="100" y="-6" font-size="10" text-anchor="middle" '
                      f'font-family="sans-serif">{sex} / {view}</text>')
+        left, right = ("D", "I") if view == "front" else ("I", "D")
+        for x, letter in ((10, left), (190, right)):
+            parts.append(f'<text x="{x}" y="44" font-size="14" text-anchor="middle" '
+                         f'font-family="sans-serif" fill="#8A837C">{letter}</text>')
         for p in polys:
             parts.append(f'<polygon points="{pts(p)}" fill="none" stroke="#8A837C" '
                          f'stroke-width="2.6" stroke-linejoin="round"/>')

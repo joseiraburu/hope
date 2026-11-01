@@ -19,6 +19,7 @@ class S {
   String get appName => 'HOPE';
   String get cancel => _t({'es': 'Cancelar', 'en': 'Cancel'});
   String get accept => _t({'es': 'Aceptar', 'en': 'OK'});
+  String get continueLabel => _t({'es': 'Continuar', 'en': 'Continue'});
   String get save => _t({'es': 'Guardar', 'en': 'Save'});
   String get delete => _t({'es': 'Borrar', 'en': 'Delete'});
   String get undo => _t({'es': 'Deshacer', 'en': 'Undo'});
@@ -31,21 +32,40 @@ class S {
   String get back => _t({'es': 'Detrás', 'en': 'Back'});
   String get settings => _t({'es': 'Ajustes', 'en': 'Settings'});
   String get about => _t({'es': 'Acerca de', 'en': 'About'});
+  String get yes => _t({'es': 'Sí', 'en': 'On'});
+  String get no => _t({'es': 'No', 'en': 'Off'});
 
   // ------------------------------------------------------- pantalla principal
-  String get painLabel => _t({'es': 'Dolor de fondo', 'en': 'Background pain'});
-  String get eventsLabel => _t({'es': 'Eventos', 'en': 'Events'});
-  String get frequencyLabel => _t({'es': 'Frecuencia', 'en': 'Frequency'});
+  /// Etiquetas de las barras (en dos líneas).
+  String get painLabel => _t({'es': 'Dolor\nde fondo', 'en': 'Background\npain'});
+  String get eventsIntensityLabel => _t({'es': 'Eventos\nIntensidad', 'en': 'Events\nIntensity'});
+  String get eventsFrequencyLabel => _t({'es': 'Eventos\nFrecuencia', 'en': 'Events\nFrequency'});
+
+  /// Los mismos nombres en una línea.
+  String get painTitle => _t({'es': 'Dolor de fondo', 'en': 'Background pain'});
+  String get eventsIntensityTitle =>
+      _t({'es': 'Eventos - intensidad', 'en': 'Events - intensity'});
+  String get eventsFrequencyTitle =>
+      _t({'es': 'Eventos - frecuencia', 'en': 'Events - frequency'});
+  String get surfaceTitle => _t({'es': 'Superficie afectada', 'en': 'Affected surface'});
+
   String get zonesButton => _t({'es': 'Zonas', 'en': 'Areas'});
   String get typesButton => _t({'es': 'Tipos', 'en': 'Types'});
   String get zonesTitle => _t({'es': 'Zonas afectadas', 'en': 'Affected areas'});
   String get typesTitle => _t({'es': 'Tipo de evento', 'en': 'Event type'});
+  String get leftSide => _t({'es': 'Izquierda', 'en': 'Left'});
+  String get rightSide => _t({'es': 'Derecha', 'en': 'Right'});
+  String get leftLetter => _t({'es': 'I', 'en': 'L'});
+  String get rightLetter => _t({'es': 'D', 'en': 'R'});
+  String pctEachSide(String pct) => _t({'es': '$pct cada lado', 'en': '$pct each side'});
   String get increase => _t({'es': 'Subir', 'en': 'Increase'});
   String get decrease => _t({'es': 'Bajar', 'en': 'Decrease'});
-  String get perMinute => _t({'es': '/min', 'en': '/min'});
+  String get perMinute => '/min';
   String get register => _t({'es': 'Registrar', 'en': 'Save entry'});
-  String get video => _t({'es': 'Vídeo', 'en': 'Video'});
+  String get share => _t({'es': 'Compartir', 'en': 'Share'});
   String get history => _t({'es': 'Histórico', 'en': 'History'});
+  String get charts => _t({'es': 'Gráficos', 'en': 'Charts'});
+  String get treatments => _t({'es': 'Tratamientos', 'en': 'Treatments'});
   String get registered => _t({'es': 'Registrado', 'en': 'Entry saved'});
   String get addNote => _t({'es': 'Añadir nota', 'en': 'Add note'});
   String get note => _t({'es': 'Nota', 'en': 'Note'});
@@ -53,17 +73,12 @@ class S {
         'es': 'Por ejemplo: dormí mal, cambié la medicación…',
         'en': 'For example: slept badly, changed medication…'
       });
-  String get videoComingSoon => _t({
-        'es': 'La exportación de vídeo llegará en la próxima versión (fase 2).',
-        'en': 'Video export is coming in the next version (phase 2).'
-      });
   String get tapBodyHint => _t({
         'es': 'Toca el cuerpo o pulsa «Zonas» para marcar dónde te duele',
         'en': 'Tap the body or press “Areas” to mark where it hurts'
       });
   String get editRecord => _t({'es': 'Editar registro', 'en': 'Edit entry'});
-  String get backdatedRecord =>
-      _t({'es': 'Registro atrasado', 'en': 'Past entry'});
+  String get backdatedRecord => _t({'es': 'Registro atrasado', 'en': 'Past entry'});
   String get changeDate => _t({'es': 'Cambiar fecha', 'en': 'Change date'});
   String sexTooltip(bool isFemale) => isFemale
       ? _t({'es': 'Silueta de mujer', 'en': 'Woman silhouette'})
@@ -92,8 +107,12 @@ class S {
         'en': 'Pain $pain/10 · $zones ${zones == 1 ? 'area' : 'areas'} ($pct)',
       });
   String eventsLine(int intensity, int freq) => _t({
-        'es': 'Eventos $intensity/10 · $freq/min',
-        'en': 'Events $intensity/10 · $freq/min',
+        'es': 'Eventos: intensidad $intensity/10 · frecuencia $freq/min',
+        'en': 'Events: intensity $intensity/10 · frequency $freq/min',
+      });
+  String eventsInOneMinute(int n) => _t({
+        'es': n == 1 ? '1 evento en 1 minuto' : '$n eventos en 1 minuto',
+        'en': n == 1 ? '1 event in 1 minute' : '$n events in 1 minute',
       });
 
   // -------------------------------------------------------------- histórico
@@ -103,18 +122,14 @@ class S {
       });
   String get filterDates => _t({'es': 'Filtrar por fechas', 'en': 'Filter by date'});
   String get clearFilter => _t({'es': 'Quitar filtro', 'en': 'Clear filter'});
-  String get addPastRecord =>
-      _t({'es': 'Añadir registro atrasado', 'en': 'Add past entry'});
+  String get addPastRecord => _t({'es': 'Añadir registro atrasado', 'en': 'Add past entry'});
   String get edit => _t({'es': 'Editar', 'en': 'Edit'});
-  String get duplicate =>
-      _t({'es': 'Usar como punto de partida', 'en': 'Use as starting point'});
+  String get duplicate => _t({'es': 'Usar como punto de partida', 'en': 'Use as starting point'});
   String get deleteRecordQuestion =>
       _t({'es': '¿Borrar este registro?', 'en': 'Delete this entry?'});
   String get recordDeleted => _t({'es': 'Registro borrado', 'en': 'Entry deleted'});
-  String get noResultsInRange => _t({
-        'es': 'No hay registros en esas fechas.',
-        'en': 'No entries in that date range.'
-      });
+  String get noResultsInRange =>
+      _t({'es': 'No hay registros en esas fechas.', 'en': 'No entries in that date range.'});
 
   // ---------------------------------------------------------------- ajustes
   String get profile => _t({'es': 'Perfil', 'en': 'Profile'});
@@ -132,17 +147,39 @@ class S {
         'en': 'Slows the pulse and removes spark flashes. '
             'Recommended if you are sensitive to light.'
       });
-  String get yes => _t({'es': 'Sí', 'en': 'On'});
-  String get no => _t({'es': 'No', 'en': 'Off'});
-  String get data => _t({'es': 'Datos', 'en': 'Data'});
-  String get deleteAll =>
-      _t({'es': 'Borrar todos los datos', 'en': 'Delete all data'});
-  String get deleteAllQuestion => _t({
-        'es': 'Se borrarán todos los registros de este dispositivo. No se puede deshacer.',
-        'en': 'All entries on this device will be deleted. This cannot be undone.'
+  String get sharingSection => _t({'es': 'Al compartir', 'en': 'When sharing'});
+  String get hideDate => _t({
+        'es': 'Ocultar la fecha en imágenes, GIF y vídeos',
+        'en': 'Hide the date in images, GIFs and videos'
       });
-  String get allDeleted =>
-      _t({'es': 'Se han borrado todos los datos', 'en': 'All data deleted'});
+  String get data => _t({'es': 'Datos', 'en': 'Data'});
+  String get backup => _t({'es': 'Copia de seguridad', 'en': 'Backup'});
+  String get backupExport => _t({'es': 'Exportar copia de seguridad', 'en': 'Export backup'});
+  String get backupExportHelp => _t({
+        'es': 'Guarda en un archivo todos tus registros, tratamientos y ajustes.',
+        'en': 'Saves all your entries, treatments and settings to a file.'
+      });
+  String get backupImport => _t({'es': 'Importar copia de seguridad', 'en': 'Import backup'});
+  String get backupImportQuestion => _t({
+        'es': 'Los datos de la copia sustituirán a los de este dispositivo. ¿Continuar?',
+        'en': 'The backup will replace the data on this device. Continue?'
+      });
+  String backupImported(int records, int treatments) => _t({
+        'es': 'Copia importada: $records registros y $treatments tratamientos',
+        'en': 'Backup imported: $records entries and $treatments treatments'
+      });
+  String get backupInvalid => _t({
+        'es': 'Ese archivo no es una copia de seguridad de HOPE.',
+        'en': 'That file is not a HOPE backup.'
+      });
+  String get deleteAll => _t({'es': 'Borrar todos los datos', 'en': 'Delete all data'});
+  String get deleteAllQuestion => _t({
+        'es': 'Se borrarán todos los registros y tratamientos de este dispositivo. '
+            'No se puede deshacer.',
+        'en': 'All entries and treatments on this device will be deleted. '
+            'This cannot be undone.'
+      });
+  String get allDeleted => _t({'es': 'Se han borrado todos los datos', 'en': 'All data deleted'});
   String get dataLocal => _t({
         'es': 'Tus registros se guardan solo en este dispositivo. HOPE no usa '
             'servidores, cuentas, publicidad ni analítica.',
@@ -150,14 +187,11 @@ class S {
             'servers, accounts, ads or analytics.'
       });
   String get version => _t({'es': 'Versión', 'en': 'Version'});
-  String get license => _t({
-        'es': 'Software libre bajo licencia GPL-3.0.',
-        'en': 'Free software under the GPL-3.0 license.'
-      });
+  String get license =>
+      _t({'es': 'Software libre bajo licencia GPL-3.0.', 'en': 'Free software under the GPL-3.0 license.'});
 
   // --------------------------------------------------- bienvenida y avisos
-  String get welcomeTitle =>
-      _t({'es': 'Te damos la bienvenida a HOPE', 'en': 'Welcome to HOPE'});
+  String get welcomeTitle => _t({'es': 'Te damos la bienvenida a HOPE', 'en': 'Welcome to HOPE'});
   String get welcomeIntro => _t({
         'es': 'HOPE te ayuda a mostrar cómo es tu dolor neuropático: dónde está, '
             'cuánto duele y cómo son los pinchazos, quemazones o descargas.',
@@ -172,6 +206,12 @@ class S {
             'does not diagnose, recommend treatments or replace healthcare '
             'professionals.'
       });
+  String get causalDisclaimer => _t({
+        'es': 'Los cambios observados no demuestran que un tratamiento sea la causa. '
+            'Coméntalos con tu equipo médico.',
+        'en': 'Observed changes do not prove that a treatment is the cause. '
+            'Discuss them with your healthcare team.'
+      });
   String get photosensitivity => _t({
         'es': 'La animación incluye pulsos y pequeños destellos. Si tienes '
             'fotosensibilidad, activa «Reducir movimiento» en Ajustes.',
@@ -182,4 +222,156 @@ class S {
         'es': 'Elige la silueta con la que te identificas (puedes cambiarla después):',
         'en': 'Choose the silhouette you identify with (you can change it later):'
       });
+
+  // ------------------------------------------------------------- compartir
+  String get shareRecordTitle => _t({'es': 'Compartir registro', 'en': 'Share entry'});
+  String get formatImage => _t({'es': 'Imagen · 1 minuto de eventos', 'en': 'Image · 1 minute of events'});
+  String get formatImageHelp => _t({
+        'es': 'Imagen fija con todos los eventos de un minuto (PNG).',
+        'en': 'Still image with all the events of one minute (PNG).'
+      });
+  String get formatGif => _t({'es': 'GIF animado', 'en': 'Animated GIF'});
+  String get formatGifHelp =>
+      _t({'es': 'La animación de 10 segundos en bucle.', 'en': 'The 10-second animation, looping.'});
+  String get formatVideo => _t({'es': 'Vídeo MP4', 'en': 'MP4 video'});
+  String get formatVideoHelp => _t({
+        'es': 'Vídeo de 20 segundos, ideal para WhatsApp y correo.',
+        'en': '20-second video, ideal for WhatsApp and email.'
+      });
+  String get generating => _t({'es': 'Preparando…', 'en': 'Preparing…'});
+  String get exportFailed =>
+      _t({'es': 'No se ha podido crear el archivo.', 'en': 'The file could not be created.'});
+  String get videoFallbackToGif => _t({
+        'es': 'Este dispositivo no ha podido crear el vídeo; se ha creado un GIF.',
+        'en': 'This device could not create the video; a GIF was created instead.'
+      });
+  String get healthDataTitle =>
+      _t({'es': 'Vas a compartir datos de salud', 'en': 'You are about to share health data'});
+  String get healthDataBody => _t({
+        'es': 'El archivo incluye información sobre tu dolor y, si los añades, tus '
+            'tratamientos. Una vez enviado, HOPE ya no controla quién puede verlo.',
+        'en': 'The file includes information about your pain and, if added, your '
+            'treatments. Once sent, HOPE no longer controls who can see it.'
+      });
+  String get fileReady => _t({'es': 'Archivo listo', 'en': 'File ready'});
+  String get saveAs => _t({'es': 'Guardar como…', 'en': 'Save as…'});
+  String get openFolder => _t({'es': 'Abrir carpeta', 'en': 'Open folder'});
+  String savedAt(String path) => _t({'es': 'Guardado en $path', 'en': 'Saved to $path'});
+
+  // ----------------------------------------------------------- tratamientos
+  String get addTreatment => _t({'es': 'Añadir tratamiento', 'en': 'Add treatment'});
+  String get editTreatment => _t({'es': 'Editar tratamiento', 'en': 'Edit treatment'});
+  String get medication => _t({'es': 'Medicamento', 'en': 'Medication'});
+  String get medications => _t({'es': 'Medicamentos', 'en': 'Medications'});
+  String get addMedication => _t({'es': 'Añadir medicamento', 'en': 'Add medication'});
+  String get renameMedication => _t({'es': 'Cambiar nombre', 'en': 'Rename'});
+  String get hideMedication => _t({'es': 'Ocultar', 'en': 'Hide'});
+  String get showMedication => _t({'es': 'Mostrar', 'en': 'Show'});
+  String get hiddenLabel => _t({'es': 'Oculto', 'en': 'Hidden'});
+  String get medicationsHelp => _t({
+        'es': 'Ocultar un medicamento no borra su historial; solo deja de aparecer al añadir tratamientos.',
+        'en': 'Hiding a medication keeps its history; it just no longer appears when adding treatments.'
+      });
+  String get medicationName => _t({'es': 'Nombre del medicamento', 'en': 'Medication name'});
+  String get route => _t({'es': 'Vía o presentación', 'en': 'Route or form'});
+  String get dose => _t({'es': 'Dosis', 'en': 'Dose'});
+  String get unit => _t({'es': 'Unidad', 'en': 'Unit'});
+  String get presets => _t({'es': 'Presentaciones habituales', 'en': 'Usual forms'});
+  String get startDate => _t({'es': 'Inicio', 'en': 'Start'});
+  String get endDate => _t({'es': 'Fin', 'en': 'End'});
+  String get noEndDate =>
+      _t({'es': 'Sin fecha de fin (administración puntual)', 'en': 'No end date (single administration)'});
+  String get setEndDate => _t({'es': 'Añadir fecha de fin', 'en': 'Add end date'});
+  String get removeEndDate => _t({'es': 'Quitar fecha de fin', 'en': 'Remove end date'});
+  String get schedule => _t({'es': 'Pauta', 'en': 'Schedule'});
+  String get scheduleHint =>
+      _t({'es': 'Por ejemplo: cada 72 h, 12 h sí y 12 h no', 'en': 'For example: every 72 h'});
+  String get notes => _t({'es': 'Notas', 'en': 'Notes'});
+  String get adverseEffects => _t({'es': 'Efectos adversos', 'en': 'Side effects'});
+  String get otherEffects => _t({'es': 'Otros efectos', 'en': 'Other effects'});
+  String get doseInvalid =>
+      _t({'es': 'Escribe una dosis mayor que 0', 'en': 'Enter a dose greater than 0'});
+  String get medicationRequired =>
+      _t({'es': 'Elige o añade un medicamento', 'en': 'Choose or add a medication'});
+  String get endBeforeStart => _t({
+        'es': 'La fecha de fin no puede ser anterior al inicio',
+        'en': 'The end date cannot be before the start'
+      });
+  String get noTreatments => _t({
+        'es': 'Todavía no hay tratamientos. Pulsa «Añadir tratamiento».',
+        'en': 'No treatments yet. Press “Add treatment”.'
+      });
+  String get allMedications => _t({'es': 'Todos', 'en': 'All'});
+  String get deleteTreatmentQuestion =>
+      _t({'es': '¿Borrar este tratamiento?', 'en': 'Delete this treatment?'});
+  String get treatmentDeleted => _t({'es': 'Tratamiento borrado', 'en': 'Treatment deleted'});
+  String get duplicateTreatment => _t({'es': 'Duplicar', 'en': 'Duplicate'});
+  String get punctual => _t({'es': 'Puntual', 'en': 'Single'});
+  String get ongoing => _t({'es': 'En curso', 'en': 'Ongoing'});
+  String get compareBeforeAfter =>
+      _t({'es': 'Comparar antes y después', 'en': 'Compare before and after'});
+  String days(int n) => _t({'es': '$n días', 'en': '$n days'});
+  String get before => _t({'es': 'Antes', 'en': 'Before'});
+  String get after => _t({'es': 'Después', 'en': 'After'});
+  String get change => _t({'es': 'Cambio', 'en': 'Change'});
+  String get parameter => _t({'es': 'Parámetro', 'en': 'Parameter'});
+  String nRecords(int n) => _t({
+        'es': n == 1 ? '1 registro' : '$n registros',
+        'en': n == 1 ? '1 entry' : '$n entries',
+      });
+  String get noData => _t({'es': 'Sin datos', 'en': 'No data'});
+  String compareWindow(int n) => _t({
+        'es': 'Media de los $n días anteriores y de los $n días posteriores al inicio.',
+        'en': 'Average of the $n days before and the $n days after the start.',
+      });
+
+  // -------------------------------------------------------------- gráficos
+  String get dateRange => _t({'es': 'Fechas', 'en': 'Dates'});
+  String get range7d => _t({'es': '7 días', 'en': '7 days'});
+  String get range30d => _t({'es': '30 días', 'en': '30 days'});
+  String get range3m => _t({'es': '3 meses', 'en': '3 months'});
+  String get range6m => _t({'es': '6 meses', 'en': '6 months'});
+  String get range1y => _t({'es': '1 año', 'en': '1 year'});
+  String get rangeAll => _t({'es': 'Todo', 'en': 'All'});
+  String get rangeCustom => _t({'es': 'Personalizado…', 'en': 'Custom…'});
+  String get groupBy => _t({'es': 'Agrupar', 'en': 'Group by'});
+  String get byDay => _t({'es': 'Día', 'en': 'Day'});
+  String get byWeek => _t({'es': 'Semana', 'en': 'Week'});
+  String get byMonth => _t({'es': 'Mes', 'en': 'Month'});
+  String get viewCombined => _t({'es': 'Combinada', 'en': 'Combined'});
+  String get viewPerParam => _t({'es': 'Por parámetro', 'en': 'Per parameter'});
+  String get viewTable => _t({'es': 'Tabla', 'en': 'Table'});
+  String get showTreatments => _t({'es': 'Mostrar tratamientos', 'en': 'Show treatments'});
+  String get play => _t({'es': 'Reproducir', 'en': 'Play'});
+  String get pause => _t({'es': 'Pausa', 'en': 'Pause'});
+  String get export => _t({'es': 'Exportar', 'en': 'Export'});
+  String get exportPng => _t({'es': 'Imagen (PNG)', 'en': 'Image (PNG)'});
+  String get exportGif => _t({'es': 'GIF animado', 'en': 'Animated GIF'});
+  String get exportExcel => _t({'es': 'Excel (.xlsx)', 'en': 'Excel (.xlsx)'});
+  String get exportPdf => _t({'es': 'Informe PDF', 'en': 'PDF report'});
+  String get noDataInRange => _t({
+        'es': 'No hay registros en estas fechas. Cambia el rango o registra tu dolor.',
+        'en': 'No entries in this date range. Change the range or log your pain.'
+      });
+  String get seriesPain => _t({'es': 'Dolor', 'en': 'Pain'});
+  String get seriesSurface => _t({'es': 'Superficie', 'en': 'Surface'});
+  String get seriesEventIntensity => eventsIntensityTitle;
+  String get seriesEventFrequency => eventsFrequencyTitle;
+  String get relativeScaleNote => _t({
+        'es': 'Escala relativa: 0–100 % de cada parámetro. La frecuencia usa la misma '
+            'escala logarítmica que su barra (10–500/min).',
+        'en': 'Relative scale: 0–100% of each parameter. Frequency uses the same '
+            'logarithmic scale as its slider (10–500/min).'
+      });
+  String get activeTreatments => _t({'es': 'Tratamientos', 'en': 'Treatments'});
+  String get period => _t({'es': 'Periodo', 'en': 'Period'});
+  String get records => _t({'es': 'Registros', 'en': 'Entries'});
+  String get mean => _t({'es': 'Media', 'en': 'Mean'});
+  String get minimum => _t({'es': 'Mínimo', 'en': 'Minimum'});
+  String get maximum => _t({'es': 'Máximo', 'en': 'Maximum'});
+  String get chartTitle => _t({'es': 'Evolución del dolor', 'en': 'Pain over time'});
+  String get reportTitle =>
+      _t({'es': 'HOPE · Informe de evolución', 'en': 'HOPE · Progress report'});
+  String generatedOn(String date) => _t({'es': 'Generado el $date', 'en': 'Generated on $date'});
+  String weekOf(String range) => _t({'es': 'Semana $range', 'en': 'Week $range'});
 }

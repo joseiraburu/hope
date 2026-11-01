@@ -7,6 +7,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import '../core/body_geometry.dart';
+import '../core/config.dart';
 import 'pain_scene.dart';
 
 /// Colores de la silueta según el tema claro u oscuro.
@@ -66,7 +67,165 @@ class BodyFit {
   Offset toBody(Offset canvasPoint) => (canvasPoint - offset) / scale;
 }
 
+/// Letras que indican el lado del paciente («D» e «I»).
+class SideLetters {
+  const SideLetters({required this.right, required this.left});
+
+  /// Letra del lado derecho del paciente (D / R).
+  final String right;
+
+  /// Letra del lado izquierdo del paciente (I / L).
+  final String left;
+}
+
+/// Opacidad de cada chispa en la imagen de «1 minuto», según cuántas haya,
+/// para que la densidad se perciba incluso con 500 chispas.
+double longExposureAlpha(int count) {
+  if (count <= 0) return 0;
+  final a = 1.6 / math.sqrt(count / 10);
+  return a.clamp(0.35, 0.9).toDouble();
+}
+
 /// Dibuja la silueta, el dolor de fondo pulsante y las chispas.
+///
+/// Se usa en la pantalla y en las imágenes, GIF y vídeos exportados, así que
+/// todo lo que se comparte es idéntico a lo que se ve en la app.
+/// [t] es el segundo del bucle. Con [longExposure] se dibujan a la vez todas
+/// las chispas de la escena (imagen de «1 minuto») y el color no pulsa.
+void paintBody(
+  Canvas canvas,
+  Size size, {
+  required ViewGeometry geometry,
+  required Size viewBox,
+  required PainScene scene,
+  required BodyPalette palette,
+  required bool reducedMotion,
+  required double t,
+  BodyView? view,
+  SideLetters? letters,
+  bool longExposure = false,
+}) {
+  if (size.isEmpty) return;
+  final fit = BodyFit(size, viewBox);
+
+  canvas.save();
+  canvas.translate(fit.offset.dx, fit.offset.dy);
+  canvas.scale(fit.scale);
+
+  // 1. Contorno: se dibuja todo con trazo grueso y luego se rellena encima,
+  //    así solo queda visible el borde exterior de la figura.
+  final outline = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 2.6
+    ..strokeJoin = StrokeJoin.round
+    ..color = palette.outline;
+  for (final p in geometry.allShapes) {
+    canvas.drawPath(p, outline);
+  }
+  final fill = Paint()..color = palette.fill;
+  for (final p in geometry.allShapes) {
+    canvas.drawPath(p, fill);
+  }
+
+  // 2. Límites suaves entre zonas.
+  final border = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 0.9
+    ..strokeJoin = StrokeJoin.round
+    ..color = palette.border;
+  for (final p in geometry.zones.values) {
+    canvas.drawPath(p, border);
+  }
+
+  // 3. Detalles (pectorales, ingles, columna).
+  final decor = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 0.9
+    ..strokeCap = StrokeCap.round
+    ..color = palette.decor;
+  for (final line in geometry.decor) {
+    canvas.drawPoints(ui.PointMode.polygon, line, decor);
+  }
+
+  // 4. Letras del lado del paciente. En la vista frontal la figura está de
+  //    cara: su derecha queda a la izquierda de la pantalla.
+  if (letters != null && view != null) {
+    final leftOfScreen = view == BodyView.front ? letters.right : letters.left;
+    final rightOfScreen = view == BodyView.front ? letters.left : letters.right;
+    for (final (x, text) in [(10.0, leftOfScreen), (viewBox.width - 10, rightOfScreen)]) {
+      final tp = TextPainter(
+        text: TextSpan(
+          text: text,
+          style: TextStyle(
+            color: palette.outline,
+            fontFamily: 'Roboto',
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(canvas, Offset(x - tp.width / 2, 34));
+      tp.dispose();
+    }
+  }
+
+  // 5. Dolor de fondo pulsante en las zonas marcadas.
+  final alpha = pulseAlpha(scene.painIntensity, longExposure ? 0 : t, reducedMotion);
+  final base = painColor(scene.config, scene.painIntensity);
+  final selFill = Paint()..color = base.withValues(alpha: alpha);
+  final selStroke = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.2
+    ..strokeJoin = StrokeJoin.round
+    ..color = palette.selectedStroke;
+  for (final z in scene.zones) {
+    final p = geometry.zones[z];
+    if (p == null) continue;
+    if (alpha > 0) canvas.drawPath(p, selFill);
+    canvas.drawPath(p, selStroke);
+  }
+
+  // 6. Chispas.
+  final positions = scene.positionsFor(geometry);
+  final life = SparkTiming.life(scene.eventIntensity, reducedMotion);
+  final radius = 3 + 9 * scene.eventIntensity / 10;
+  final peak = SparkTiming.fadeIn(reducedMotion) + SparkTiming.hold(scene.eventIntensity) / 2;
+  final longAlpha = longExposureAlpha(scene.sparks.length);
+  for (var i = 0; i < scene.sparks.length; i++) {
+    final pos = positions[i];
+    if (pos == null) continue;
+    final spark = scene.sparks[i];
+    final double tau;
+    final double a;
+    if (longExposure) {
+      tau = peak;
+      a = longAlpha;
+    } else {
+      tau = (t - spark.start) % scene.loopSeconds;
+      if (tau > life) continue;
+      a = SparkTiming.alpha(tau, scene.eventIntensity, reducedMotion);
+      if (a <= 0.01) continue;
+    }
+    final color = scene.config.eventTypeById[spark.type]?.color ?? Colors.white;
+    paintSpark(
+      canvas,
+      type: spark.type,
+      center: pos,
+      radius: radius,
+      tau: tau,
+      life: life,
+      alpha: a,
+      angle: spark.angle,
+      color: color,
+      shadow: palette.sparkShadow,
+      reduced: reducedMotion || longExposure,
+    );
+  }
+  canvas.restore();
+}
+
+/// Dibuja la silueta en pantalla, animada con [clock].
 class BodyPainter extends CustomPainter {
   BodyPainter({
     required this.geometry,
@@ -74,6 +233,8 @@ class BodyPainter extends CustomPainter {
     required this.scene,
     required this.palette,
     required this.reducedMotion,
+    this.view,
+    this.letters,
     this.clock,
     this.staticPhase = 0.25,
   }) : super(repaint: clock);
@@ -83,6 +244,8 @@ class BodyPainter extends CustomPainter {
   final PainScene scene;
   final BodyPalette palette;
   final bool reducedMotion;
+  final BodyView? view;
+  final SideLetters? letters;
 
   /// Fase del bucle (0–1). Si es null se dibuja un fotograma fijo.
   final Animation<double>? clock;
@@ -90,93 +253,18 @@ class BodyPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (size.isEmpty) return;
-    final fit = BodyFit(size, viewBox);
-    final t = (clock?.value ?? staticPhase) * scene.loopSeconds;
-
-    canvas.save();
-    canvas.translate(fit.offset.dx, fit.offset.dy);
-    canvas.scale(fit.scale);
-
-    // 1. Contorno: se dibuja todo con trazo grueso y luego se rellena encima,
-    //    así solo queda visible el borde exterior de la figura.
-    final outline = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.6
-      ..strokeJoin = StrokeJoin.round
-      ..color = palette.outline;
-    for (final p in geometry.allShapes) {
-      canvas.drawPath(p, outline);
-    }
-    final fill = Paint()..color = palette.fill;
-    for (final p in geometry.allShapes) {
-      canvas.drawPath(p, fill);
-    }
-
-    // 2. Límites suaves entre zonas.
-    final border = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.9
-      ..strokeJoin = StrokeJoin.round
-      ..color = palette.border;
-    for (final p in geometry.zones.values) {
-      canvas.drawPath(p, border);
-    }
-
-    // 3. Detalles (pectorales, ingles, columna).
-    final decor = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.9
-      ..strokeCap = StrokeCap.round
-      ..color = palette.decor;
-    for (final line in geometry.decor) {
-      canvas.drawPoints(ui.PointMode.polygon, line, decor);
-    }
-
-    // 4. Dolor de fondo pulsante en las zonas marcadas.
-    final alpha = pulseAlpha(scene.painIntensity, t, reducedMotion);
-    final base = painColor(scene.config, scene.painIntensity);
-    final selFill = Paint()..color = base.withValues(alpha: alpha);
-    final selStroke = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2
-      ..strokeJoin = StrokeJoin.round
-      ..color = palette.selectedStroke;
-    for (final z in scene.zones) {
-      final p = geometry.zones[z];
-      if (p == null) continue;
-      if (alpha > 0) canvas.drawPath(p, selFill);
-      canvas.drawPath(p, selStroke);
-    }
-
-    // 5. Chispas.
-    final positions = scene.positionsFor(geometry);
-    final life = SparkTiming.life(scene.eventIntensity, reducedMotion);
-    final radius = 3 + 9 * scene.eventIntensity / 10;
-    for (var i = 0; i < scene.sparks.length; i++) {
-      final pos = positions[i];
-      if (pos == null) continue;
-      final spark = scene.sparks[i];
-      final tau = (t - spark.start) % scene.loopSeconds;
-      if (tau > life) continue;
-      final a = SparkTiming.alpha(tau, scene.eventIntensity, reducedMotion);
-      if (a <= 0.01) continue;
-      final color = scene.config.eventTypeById[spark.type]?.color ?? Colors.white;
-      paintSpark(
-        canvas,
-        type: spark.type,
-        center: pos,
-        radius: radius,
-        tau: tau,
-        life: life,
-        alpha: a,
-        angle: spark.angle,
-        color: color,
-        shadow: palette.sparkShadow,
-        reduced: reducedMotion,
-      );
-    }
-    canvas.restore();
+    paintBody(
+      canvas,
+      size,
+      geometry: geometry,
+      viewBox: viewBox,
+      scene: scene,
+      palette: palette,
+      reducedMotion: reducedMotion,
+      t: (clock?.value ?? staticPhase) * scene.loopSeconds,
+      view: view,
+      letters: letters,
+    );
   }
 
   @override
@@ -185,6 +273,8 @@ class BodyPainter extends CustomPainter {
         oldDelegate.geometry != geometry ||
         oldDelegate.palette != palette ||
         oldDelegate.reducedMotion != reducedMotion ||
+        oldDelegate.view != view ||
+        oldDelegate.letters?.right != letters?.right ||
         oldDelegate.clock != clock ||
         oldDelegate.staticPhase != staticPhase;
   }

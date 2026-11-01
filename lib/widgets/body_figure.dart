@@ -18,6 +18,7 @@ class BodyFigure extends StatelessWidget {
     required this.view,
     this.clock,
     this.onZoneTap,
+    this.showSideLetters = true,
   });
 
   final PainScene scene;
@@ -26,6 +27,9 @@ class BodyFigure extends StatelessWidget {
   final Animation<double>? clock;
   final ValueChanged<String>? onZoneTap;
 
+  /// Muestra la «D» y la «I» del lado del paciente.
+  final bool showSideLetters;
+
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
@@ -33,8 +37,8 @@ class BodyFigure extends StatelessWidget {
     final geometry = app.geometry.view(sex, view);
     final palette = BodyPalette.of(Theme.of(context).brightness);
     final reduced = app.reducedMotion(context);
-    final zoneNames = scene.zones
-        .map((z) => app.config.zoneById[z]?.name(app.language) ?? z)
+    final zoneNames = app.config
+        .describeParts(scene.zones.where((p) => app.config.partVisibleIn(p, view)), app.language)
         .join(', ');
 
     return LayoutBuilder(builder: (context, constraints) {
@@ -47,6 +51,8 @@ class BodyFigure extends StatelessWidget {
           scene: scene,
           palette: palette,
           reducedMotion: reduced,
+          view: view,
+          letters: showSideLetters ? SideLetters(right: s.rightLetter, left: s.leftLetter) : null,
           clock: clock,
         ),
       );

@@ -10,6 +10,7 @@ import '../animation/pain_scene.dart';
 import '../core/body_geometry.dart';
 import '../core/config.dart';
 import '../core/frequency_scale.dart';
+import '../export/record_share.dart';
 import '../models/pain_record.dart';
 import '../state/app_controller.dart';
 import '../state/pain_state.dart';
@@ -19,8 +20,10 @@ import '../widgets/dialogs.dart';
 import '../widgets/logo.dart';
 import '../widgets/selector_sheets.dart';
 import '../widgets/vertical_control.dart';
+import 'charts_screen.dart';
 import 'history_screen.dart';
 import 'settings_screen.dart';
+import 'treatments_screen.dart';
 
 /// Pantalla principal: silueta animada y los cuatro controles.
 ///
@@ -46,6 +49,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   DateTime _date = DateTime.now();
   Sex _editorSex = Sex.female;
   bool _welcomeShown = false;
+
+  /// Último registro creado desde esta pantalla (para no duplicarlo al compartir).
+  PainRecord? _lastRecord;
 
   @override
   void didChangeDependencies() {
@@ -110,6 +116,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     }
     final record = state.toRecord(sex: app.settings.sex, dateTime: DateTime.now());
     await app.addRecord(record);
+    _lastRecord = record;
     if (!mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     messenger.hideCurrentSnackBar();
@@ -124,15 +131,26 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     ));
   }
 
-  void _exportVideo() {
-    final s = AppScope.read(context).strings;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        content: Text(s.videoComingSoon),
-        behavior: SnackBarBehavior.floating,
-        margin: _snackMargin,
-      ));
+  /// Comparte el estado actual. Si aún no está registrado, se registra antes.
+  Future<void> _share() async {
+    final app = AppScope.read(context);
+    final state = _state!;
+    var record = _lastRecord;
+    if (record == null || !state.matches(record)) {
+      record = state.toRecord(sex: app.settings.sex, dateTime: DateTime.now());
+      await app.addRecord(record);
+      _lastRecord = record;
+    }
+    if (!mounted) return;
+    await showRecordShareSheet(context, app.recordById(record.id) ?? record);
+  }
+
+  void _openCharts() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ChartsScreen()));
+  }
+
+  void _openTreatments() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TreatmentsScreen()));
   }
 
   /// Los avisos flotan por encima de la barra de botones para no taparla.
@@ -236,9 +254,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         child: CallbackShortcuts(
           bindings: <ShortcutActivator, VoidCallback>{
             const SingleActivator(LogicalKeyboardKey.keyR): () => _register(),
-            const SingleActivator(LogicalKeyboardKey.keyE): _exportVideo,
-            if (!widget.isEditor)
+            if (!widget.isEditor) ...{
+              const SingleActivator(LogicalKeyboardKey.keyC): () => _share(),
               const SingleActivator(LogicalKeyboardKey.keyH): () => _openHistory(),
+              const SingleActivator(LogicalKeyboardKey.keyG): _openCharts,
+              const SingleActivator(LogicalKeyboardKey.keyT): _openTreatments,
+            },
           },
           child: Focus(
             autofocus: true,
@@ -357,10 +378,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             tooltip: s.settings,
             icon: const Icon(Icons.more_vert),
             onSelected: (v) {
+              if (v == 'treatments') _openTreatments();
               if (v == 'settings') _openSettings();
               if (v == 'about') showHopeAbout(context);
             },
             itemBuilder: (ctx) => [
+              PopupMenuItem(
+                value: 'treatments',
+                child: ListTile(leading: const Icon(Icons.medication_outlined), title: Text(s.treatments)),
+              ),
               PopupMenuItem(
                 value: 'settings',
                 child: ListTile(leading: const Icon(Icons.settings), title: Text(s.settings)),
@@ -409,7 +435,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ),
           const SizedBox(height: 4),
           Text(
-            s.zonesSummary(state.zones.length, formatPct(state.surfacePct, app.language)),
+            s.zonesSummary(state.zoneCount, formatPct(state.surfacePct, app.language)),
             textAlign: TextAlign.center,
             maxLines: 2,
             style: Theme.of(context).textTheme.bodySmall,
@@ -436,7 +462,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 VerticalControl(
-                  label: s.eventsLabel,
+                  label: s.eventsIntensityLabel,
                   valueText: '${state.eventIntensity}',
                   position: state.eventIntensity / 10,
                   divisions: 10,
@@ -451,7 +477,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ),
                 const SizedBox(width: 4),
                 VerticalControl(
-                  label: s.frequencyLabel,
+                  label: s.eventsFrequencyLabel,
                   valueText: '${state.frequency}${s.perMinute}',
                   position: scale.toPosition(state.frequency),
                   minValue: app.config.freqMin,
@@ -616,9 +642,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 const SizedBox(width: 8),
                 Expanded(
                   child: _ActionButton(
-                    icon: Icons.movie_outlined,
-                    label: s.video,
-                    onPressed: _exportVideo,
+                    icon: Icons.share_outlined,
+                    label: s.share,
+                    onPressed: () => _share(),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -627,6 +653,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     icon: Icons.history,
                     label: s.history,
                     onPressed: () => _openHistory(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _ActionButton(
+                    icon: Icons.show_chart,
+                    label: s.charts,
+                    onPressed: _openCharts,
                   ),
                 ),
               ],

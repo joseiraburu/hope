@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../animation/pain_scene.dart';
 import '../core/body_geometry.dart';
 import '../core/config.dart';
+import '../export/record_share.dart';
 import '../models/pain_record.dart';
 import '../state/app_controller.dart';
 import '../state/pain_state.dart';
@@ -160,11 +161,9 @@ class _RecordPlayerScreenState extends State<RecordPlayerScreen>
                       label: Text(s.duplicate),
                     ),
                     OutlinedButton.icon(
-                      onPressed: () => ScaffoldMessenger.of(context)
-                        ..hideCurrentSnackBar()
-                        ..showSnackBar(SnackBar(content: Text(s.videoComingSoon))),
-                      icon: const Icon(Icons.movie_outlined),
-                      label: Text(s.video),
+                      onPressed: () => showRecordShareSheet(context, record),
+                      icon: const Icon(Icons.share_outlined),
+                      label: Text(s.share),
                     ),
                     OutlinedButton.icon(
                       onPressed: () => Navigator.of(context).pop(RecordAction.delete),

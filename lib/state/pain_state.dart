@@ -123,14 +123,16 @@ class PainState extends ChangeNotifier {
     required DateTime dateTime,
     PainRecord? existing,
   }) {
-    final zones = config.orderedZones(_zones);
+    final zones = config.orderedParts(_zones);
     final types = config.orderedEventTypes(_eventTypes);
+    final zoneCount = config.describeParts(zones, 'es').length;
     if (existing != null) {
       return existing.copyWith(
         dateTime: dateTime,
         sex: sex,
         painIntensity: _intensity,
         zones: zones,
+        zoneCount: zoneCount,
         surfacePct: config.surfacePct(zones),
         eventIntensity: _eventIntensity,
         eventTypes: types,
@@ -144,6 +146,7 @@ class PainState extends ChangeNotifier {
       sex: sex,
       painIntensity: _intensity,
       zones: zones,
+      zoneCount: zoneCount,
       surfacePct: config.surfacePct(zones),
       eventIntensity: _eventIntensity,
       eventTypes: types,
@@ -151,6 +154,18 @@ class PainState extends ChangeNotifier {
       seed: _seed,
     );
   }
+
+  /// Número de zonas afectadas («Pies (ambos)» cuenta como una).
+  int get zoneCount => config.describeParts(_zones, 'es').length;
+
+  /// ¿Coinciden los valores actuales con los de un registro?
+  bool matches(PainRecord r) =>
+      r.painIntensity == _intensity &&
+      r.eventIntensity == _eventIntensity &&
+      r.eventFrequency == _frequency &&
+      r.seed == _seed &&
+      setEquals(r.zones.toSet(), _zones) &&
+      setEquals(r.eventTypes.toSet(), _eventTypes);
 }
 
 /// Escena animada de un registro guardado.

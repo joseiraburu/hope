@@ -61,7 +61,9 @@ class SparkTiming {
 
 /// Genera la lista determinista de chispas de un bucle.
 ///
-/// Misma semilla y mismos parámetros → exactamente las mismas chispas.
+/// [zones] son las partes marcadas («pies_izq», «pecho»...). Misma semilla y
+/// mismos parámetros → exactamente las mismas chispas. Con [loopSeconds] = 60
+/// se obtienen todos los eventos de un minuto (imagen de «1 minuto»).
 List<Spark> generateSparks({
   required AppConfig config,
   required int seed,
@@ -69,14 +71,17 @@ List<Spark> generateSparks({
   required int frequency,
   required int eventIntensity,
   required List<String> eventTypes,
+  double? loopSeconds,
 }) {
   if (zones.isEmpty || eventIntensity <= 0 || eventTypes.isEmpty) return const [];
-  final loop = config.loopSeconds;
+  final loop = loopSeconds ?? config.loopSeconds;
   final count = (frequency * loop / 60).round();
   if (count <= 0) return const [];
 
   final rng = Mulberry32(seed);
-  final weights = [for (final z in zones) config.zoneById[z]?.pct ?? 1.0];
+  final weights = [
+    for (final z in zones) config.partPct(z) > 0 ? config.partPct(z) : 1.0
+  ];
   final totalWeight = weights.fold<double>(0, (a, b) => a + b);
 
   // Reparto de tipos a partes iguales y en orden aleatorio.
@@ -160,8 +165,10 @@ class PainScene {
     required List<String> eventTypes,
     required this.frequency,
     required this.seed,
-  })  : zones = config.orderedZones(zones),
-        eventTypes = config.orderedEventTypes(eventTypes) {
+    double? loopSeconds,
+  })  : zones = config.orderedParts(zones),
+        eventTypes = config.orderedEventTypes(eventTypes),
+        loopSeconds = loopSeconds ?? config.loopSeconds {
     sparks = generateSparks(
       config: config,
       seed: seed,
@@ -169,11 +176,26 @@ class PainScene {
       frequency: frequency,
       eventIntensity: eventIntensity,
       eventTypes: this.eventTypes,
+      loopSeconds: this.loopSeconds,
     );
   }
 
+  /// La misma escena con todos los eventos de un minuto.
+  PainScene oneMinute() => PainScene(
+        config: config,
+        painIntensity: painIntensity,
+        zones: zones,
+        eventIntensity: eventIntensity,
+        eventTypes: eventTypes,
+        frequency: frequency,
+        seed: seed,
+        loopSeconds: 60,
+      );
+
   final AppConfig config;
   final int painIntensity;
+
+  /// Partes marcadas, en el orden de la configuración.
   final List<String> zones;
   final int eventIntensity;
   final List<String> eventTypes;
@@ -181,9 +203,10 @@ class PainScene {
   final int seed;
   late final List<Spark> sparks;
 
-  final Map<ViewGeometry, List<Offset?>> _positions = Map.identity();
+  /// Duración del bucle en segundos (10 en la app, 60 en la imagen).
+  final double loopSeconds;
 
-  double get loopSeconds => config.loopSeconds;
+  final Map<ViewGeometry, List<Offset?>> _positions = Map.identity();
 
   double get surfacePct => config.surfacePct(zones);
 

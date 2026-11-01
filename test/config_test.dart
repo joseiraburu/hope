@@ -10,37 +10,74 @@ void main() {
   final config = loadConfig();
   final geometry = loadGeometry();
 
-  test('hay 14 zonas y 6 tipos de evento', () {
-    expect(config.zones.length, 14);
+  test('hay 16 zonas (7 pares), 23 partes y 6 tipos de evento', () {
+    expect(config.zones.length, 16);
+    expect(config.zones.where((z) => z.paired).length, 7);
+    expect(config.allParts.length, 23);
     expect(config.eventTypes.length, 6);
   });
 
-  test('la superficie de todas las zonas suma 98 % (sin el cuello)', () {
-    expect(config.surfacePct(config.zones.map((z) => z.id)), 98.0);
+  test('con el cuello, todas las partes suman el 100 %', () {
+    expect(config.surfacePct(config.allParts), 100.0);
   });
 
-  test('superficie de combinaciones concretas', () {
-    expect(config.surfacePct(['pies', 'manos']), 12.0);
-    expect(config.surfacePct(['pecho', 'abdomen', 'cara']), 16.5);
+  test('superficie por lado', () {
+    expect(config.surfacePct(['pies_izq']), 3.5);
+    expect(config.surfacePct(['pies_izq', 'pies_der']), 7.0);
+    expect(config.surfacePct(['manos_der', 'pecho']), 9.0);
+    expect(config.surfacePct(['cuello_delante', 'cuello_detras']), 2.0);
     expect(config.surfacePct([]), 0.0);
-    // Las zonas repetidas o desconocidas no suman dos veces.
-    expect(config.surfacePct(['pies', 'pies', 'desconocida']), 7.0);
+    // Las partes repetidas o desconocidas no suman.
+    expect(config.surfacePct(['pies_izq', 'pies_izq', 'pies', 'desconocida']), 3.5);
   });
 
-  test('las zonas se ordenan como en la configuración', () {
-    expect(config.orderedZones(['cabeza', 'pies', 'muslos']), ['pies', 'muslos', 'cabeza']);
+  test('las partes se ordenan como en la configuración', () {
+    expect(config.orderedParts(['cabeza', 'pies_der', 'muslos_izq', 'pies_izq', 'otra']),
+        ['pies_izq', 'pies_der', 'muslos_izq', 'cabeza']);
   });
 
-  test('cada zona aparece dibujada en las vistas que declara, en ambas siluetas', () {
+  test('descripción de la selección con lateralidad', () {
+    expect(config.describeParts(['manos_izq', 'pies_der', 'pies_izq', 'pecho'], 'es'),
+        ['Pies (ambos)', 'Pecho', 'Mano izquierda']);
+    expect(config.describeParts(['pantorrillas_der'], 'en'), ['Right calf']);
+    expect(config.partName('gluteos_izq', 'es'), 'Glúteo izquierdo');
+    expect(config.sideOfPart('pies_der'), Side.der);
+    expect(config.sideOfPart('pecho'), isNull);
+  });
+
+  test('cada parte aparece dibujada en las vistas que declara, en ambas siluetas', () {
     for (final sex in Sex.values) {
       for (final zone in config.zones) {
-        for (final view in BodyView.values) {
-          final drawn = geometry.view(sex, view).zones.containsKey(zone.id);
-          expect(drawn, zone.views.contains(view),
-              reason: '${zone.id} en ${sex.name}/${view.name}');
+        for (final part in zone.parts) {
+          for (final view in BodyView.values) {
+            final drawn = geometry.view(sex, view).zones.containsKey(part);
+            expect(drawn, zone.views.contains(view),
+                reason: '$part en ${sex.name}/${view.name}');
+          }
         }
       }
     }
+  });
+
+  test('izquierda y derecha son las del paciente', () {
+    for (final sex in Sex.values) {
+      final front = geometry.view(sex, BodyView.front);
+      final back = geometry.view(sex, BodyView.back);
+      // Pie situado a la izquierda de la pantalla.
+      expect(front.zoneAt(const Offset(77, 500)), 'pies_der', reason: sex.name);
+      expect(back.zoneAt(const Offset(77, 500)), 'pies_izq', reason: sex.name);
+      // Pie situado a la derecha de la pantalla.
+      expect(front.zoneAt(const Offset(123, 500)), 'pies_izq', reason: sex.name);
+      expect(back.zoneAt(const Offset(123, 500)), 'pies_der', reason: sex.name);
+    }
+  });
+
+  test('el cuello se puede tocar por delante y por detrás', () {
+    final front = geometry.view(Sex.female, BodyView.front);
+    final back = geometry.view(Sex.male, BodyView.back);
+    expect(front.zoneAt(const Offset(100, 74)), 'cuello_delante');
+    expect(back.zoneAt(const Offset(100, 74)), 'cuello_detras');
+    expect(front.zoneAt(const Offset(100, 50)), 'cara');
   });
 
   test('tocar el centro del pecho selecciona «pecho» en la vista frontal', () {

@@ -49,6 +49,23 @@ void main() {
     expect(find.text('Registrado'), findsOneWidget);
   });
 
+  testWidgets('la hoja de zonas marca cada lado por separado', (tester) async {
+    await setScreen(tester, const Size(412, 915));
+    final controller = await testController();
+    await tester.pumpWidget(HopeApp(controller: controller));
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.tap(find.text('Zonas'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.tap(find.byTooltip('Pie izquierdo'));
+    await tester.pump();
+    expect(find.text('1 zona · 3,5 %'), findsWidgets);
+    await tester.tap(find.byTooltip('Pie derecho'));
+    await tester.pump();
+    expect(find.text('1 zona · 7 %'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('la bienvenida aparece la primera vez y guarda la silueta', (tester) async {
     await setScreen(tester, const Size(412, 915));
     final controller = await testController(

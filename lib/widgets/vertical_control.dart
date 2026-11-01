@@ -42,13 +42,16 @@ class VerticalControl extends StatelessWidget {
   final Color? color;
   final double width;
 
+  /// Etiqueta en una sola línea (para el lector de pantalla y los diálogos).
+  String get plainLabel => label.replaceAll('\n', ' ');
+
   Future<void> _askValue(BuildContext context) async {
     final s = AppScope.read(context).strings;
     final controller = TextEditingController();
     final result = await showDialog<int>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(label),
+        title: Text(plainLabel),
         content: TextField(
           controller: controller,
           autofocus: true,
@@ -82,21 +85,25 @@ class VerticalControl extends StatelessWidget {
       width: width,
       child: Column(
         children: [
+          // La etiqueta va en dos líneas («Eventos» / «Intensidad») y se
+          // reduce si no cabe, para que nunca se corte.
           SizedBox(
-            height: 34,
+            height: 36,
+            width: width,
             child: Center(
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: width < 80 ? theme.textTheme.labelSmall : theme.textTheme.labelMedium,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.labelMedium?.copyWith(height: 1.2),
+                ),
               ),
             ),
           ),
           Semantics(
             button: true,
-            label: '$label: $valueText',
+            label: '$plainLabel: $valueText',
             excludeSemantics: true,
             child: InkWell(
               borderRadius: BorderRadius.circular(8),
@@ -116,7 +123,7 @@ class VerticalControl extends StatelessWidget {
           ),
           IconButton(
             onPressed: onIncrement,
-            tooltip: '${s.increase} · $label',
+            tooltip: '${s.increase} · $plainLabel',
             icon: const Icon(Icons.add),
             style: IconButton.styleFrom(minimumSize: const Size(48, 48)),
           ),
@@ -135,14 +142,14 @@ class VerticalControl extends StatelessWidget {
                   value: position.clamp(0.0, 1.0).toDouble(),
                   divisions: divisions,
                   onChanged: onPosition,
-                  semanticFormatterCallback: (_) => '$label: $valueText',
+                  semanticFormatterCallback: (_) => '$plainLabel: $valueText',
                 ),
               ),
             ),
           ),
           IconButton(
             onPressed: onDecrement,
-            tooltip: '${s.decrease} · $label',
+            tooltip: '${s.decrease} · $plainLabel',
             icon: const Icon(Icons.remove),
             style: IconButton.styleFrom(minimumSize: const Size(48, 48)),
           ),

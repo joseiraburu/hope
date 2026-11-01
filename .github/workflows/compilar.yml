@@ -9,7 +9,7 @@ name: Compilar HOPE
 
 on:
   push:
-    branches: [main]
+    branches-ignore: [ci-capturas]
     tags: ['v*']
   pull_request:
   workflow_dispatch:
@@ -36,9 +36,17 @@ jobs:
         with:
           channel: stable
           cache: true
-      - run: flutter --version
+      - name: Versión de Flutter
+        run: echo "::notice title=Flutter::$(flutter --version | head -n 1)"
       - run: flutter pub get
-      - run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - name: Análisis
+        run: |
+          set -o pipefail
+          status=0
+          flutter analyze --no-fatal-infos --no-fatal-warnings > analyze.log 2>&1 || status=$?
+          cat analyze.log
+          python3 tool/anotar.py analyze.log
+          exit $status
       - name: Pruebas
         run: |
           set -o pipefail
@@ -46,7 +54,24 @@ jobs:
       - name: Mostrar las pruebas fallidas
         if: failure()
         run: |
+          [ -f test.log ] || exit 0
           echo "::error title=Pruebas::$( (grep -B 60 -A 6 '\[E\]' test.log || tail -n 80 test.log) | head -n 160 | sed -e 's/%/%25/g' -e 's/\r//g' | sed ':a;N;$!ba;s/\n/%0A/g')"
+      - name: Publicar capturas para revisión
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ ! -d build/capturas ] && [ ! -d build/muestras ]; then exit 0; fi
+          rm -rf /tmp/capturas && mkdir -p /tmp/capturas
+          cp -r build/capturas /tmp/capturas/ 2>/dev/null || true
+          cp -r build/muestras /tmp/capturas/ 2>/dev/null || true
+          cd /tmp/capturas
+          git init -q -b ci-capturas
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git commit -qm "Capturas de ${GITHUB_SHA::7}"
+          git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" ci-capturas
 
   android:
     name: Android (APK)

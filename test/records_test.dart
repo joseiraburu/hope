@@ -14,7 +14,7 @@ PainRecord sample({String? id, DateTime? at}) => PainRecord(
       dateTime: at ?? DateTime(2026, 10, 31, 14, 24),
       sex: 'female',
       painIntensity: 6,
-      zones: const ['pies', 'manos'],
+      zones: const ['pies_izq', 'pies_der', 'manos_izq'],
       surfacePct: 12,
       eventIntensity: 7,
       eventTypes: const ['pinchazo', 'quemazon'],
@@ -59,11 +59,15 @@ void main() {
       ..intensity = 8
       ..eventIntensity = 4
       ..frequency = 999; // se ajusta al máximo
-    state.setZones(['cabeza', 'pies']);
+    state.setZones(['cabeza', 'pies_der', 'pies_izq', 'manos_der']);
     state.setEventTypes(['golpe']);
     final r = state.toRecord(sex: 'male', dateTime: DateTime(2026, 1, 1));
-    expect(r.zones, ['pies', 'cabeza']);
-    expect(r.surfacePct, 10.5);
+    expect(r.zones, ['pies_izq', 'pies_der', 'manos_der', 'cabeza']);
+    expect(r.zoneCount, 3); // Pies (ambos), Mano derecha y Cabeza
+    expect(r.surfacePct, 13.0);
+    expect(state.matches(r), isTrue);
+    state.intensity = 2;
+    expect(state.matches(r), isFalse);
     expect(r.eventFrequency, 500);
     expect(r.seed, 9);
     expect(r.sex, 'male');

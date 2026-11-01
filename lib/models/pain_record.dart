@@ -18,7 +18,8 @@ class PainRecord {
     required this.seed,
     this.note = '',
     this.videoPath,
-  });
+    int? zoneCount,
+  }) : _zoneCount = zoneCount;
 
   final String id;
   final DateTime dateTime;
@@ -38,8 +39,10 @@ class PainRecord {
   final int seed;
   final String note;
   final String? videoPath;
+  final int? _zoneCount;
 
-  int get zoneCount => zones.length;
+  /// Número de zonas afectadas («Pies (ambos)» cuenta como una).
+  int get zoneCount => _zoneCount ?? zones.length;
 
   PainRecord copyWith({
     DateTime? dateTime,
@@ -53,6 +56,7 @@ class PainRecord {
     int? seed,
     String? note,
     String? videoPath,
+    int? zoneCount,
   }) {
     return PainRecord(
       id: id,
@@ -67,6 +71,7 @@ class PainRecord {
       seed: seed ?? this.seed,
       note: note ?? this.note,
       videoPath: videoPath ?? this.videoPath,
+      zoneCount: zoneCount ?? _zoneCount,
     );
   }
 
@@ -101,6 +106,7 @@ class PainRecord {
         seed: (j['semilla_animacion'] as num?)?.toInt() ?? 1,
         note: (j['nota'] as String?) ?? '',
         videoPath: j['video_ruta'] as String?,
+        zoneCount: (j['num_zonas'] as num?)?.toInt(),
       );
 }
 
