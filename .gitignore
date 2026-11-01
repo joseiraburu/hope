@@ -17,6 +17,25 @@ pubspec.lock
 /macos/
 .metadata
 
+# Archivos que la plantilla de Flutter añade al complemento de vídeo al compilar
+/packages/hope_media/android/*
+!/packages/hope_media/android/src/
+/packages/hope_media/android/src/*
+!/packages/hope_media/android/src/main/
+/packages/hope_media/android/src/main/*
+!/packages/hope_media/android/src/main/kotlin/
+
+/packages/hope_media/windows/test/
+/packages/hope_media/example/
+/packages/hope_media/test/
+/packages/hope_media/README.md
+/packages/hope_media/CHANGELOG.md
+/packages/hope_media/LICENSE
+/packages/hope_media/analysis_options.yaml
+/packages/hope_media/.gitignore
+/packages/hope_media/lib/hope_media_platform_interface.dart
+/packages/hope_media/lib/hope_media_method_channel.dart
+
 # Resultados de compilación
 dist/
 

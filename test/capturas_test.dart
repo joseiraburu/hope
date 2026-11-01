@@ -13,7 +13,10 @@ import 'package:hope/app.dart';
 import 'package:hope/models/app_settings.dart';
 import 'package:hope/models/pain_record.dart';
 import 'package:hope/models/treatment.dart';
+import 'package:hope/export/record_share.dart';
 import 'package:hope/screens/charts_screen.dart';
+import 'package:hope/screens/home_screen.dart';
+import 'package:hope/screens/settings_screen.dart';
 import 'package:hope/screens/treatment_editor_screen.dart';
 import 'package:hope/screens/treatments_screen.dart';
 import 'package:hope/widgets/compare_sheet.dart';
@@ -125,6 +128,29 @@ void main() {
     await tester.pumpWidget(shot(controller));
     await tester.pump(const Duration(milliseconds: 2600));
     await capture(tester, '05_principal_escritorio');
+  });
+
+  testWidgets('captura: compartir un registro y ajustes', (tester) async {
+    await setScreen(tester, const Size(393, 852));
+    final record = sampleRecord(at: DateTime(2026, 11, 1, 10));
+    final controller = await testController(records: [record]);
+    await tester.pumpWidget(shot(controller));
+    await tester.pump(const Duration(milliseconds: 300));
+    showRecordShareSheet(tester.element(find.byType(HomeScreen)), record);
+    await settle(tester);
+    await capture(tester, '06_compartir');
+    expect(find.text('Vídeo MP4'), findsOneWidget);
+    tester.state<NavigatorState>(find.byType(Navigator).first).pop();
+    await settle(tester);
+
+    final nav = tester.state<NavigatorState>(find.byType(Navigator).first);
+    nav.push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
+    await settle(tester);
+    await capture(tester, '07_ajustes');
+    await tester.drag(find.byType(ListView).first, const Offset(0, -700));
+    await settle(tester);
+    await capture(tester, '08_ajustes_datos');
+    expect(find.text('Exportar copia de seguridad'), findsOneWidget);
   });
 
   testWidgets('captura: tratamientos', (tester) async {
@@ -242,10 +268,15 @@ void main() {
     await settle(tester);
     await capture(tester, '20_graficos');
 
+    // En el móvil los controles van en filas deslizables.
+    await tester.ensureVisible(find.text('Por parámetro'));
+    await settle(tester);
     await tester.tap(find.text('Por parámetro'));
     await settle(tester);
     await capture(tester, '21_graficos_por_parametro');
 
+    await tester.ensureVisible(find.text('Tabla'));
+    await settle(tester);
     await tester.tap(find.text('Tabla'));
     await settle(tester);
     await capture(tester, '22_graficos_tabla');

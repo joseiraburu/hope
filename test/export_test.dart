@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -195,12 +194,6 @@ ChartExportInput sampleInput({Grouping grouping = Grouping.week, String lang = '
     config: config,
     medicationName: (t) => t.medicationName,
   );
-}
-
-void saveSample(String name, List<int> bytes) {
-  final f = File('build/muestras/$name');
-  f.parent.createSync(recursive: true);
-  f.writeAsBytesSync(bytes);
 }
 
 void main() {

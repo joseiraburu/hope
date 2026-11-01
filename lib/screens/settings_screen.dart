@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/version.dart';
+import '../export/backup_flow.dart';
 import '../state/app_controller.dart';
 import '../widgets/dialogs.dart';
 import '../widgets/logo.dart';
@@ -94,10 +95,27 @@ class SettingsScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(s.motionHelp, style: theme.textTheme.bodySmall),
           ),
+          section(s.sharingSection),
+          SwitchListTile(
+            title: Text(s.hideDate),
+            value: settings.hideDateInExports,
+            onChanged: (v) => app.updateSettings(settings.copyWith(hideDateInExports: v)),
+          ),
           section(s.data),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(s.dataLocal),
+          ),
+          ListTile(
+            leading: const Icon(Icons.backup_outlined),
+            title: Text(s.backupExport),
+            subtitle: Text(s.backupExportHelp),
+            onTap: () => exportBackup(context),
+          ),
+          ListTile(
+            leading: const Icon(Icons.restore),
+            title: Text(s.backupImport),
+            onTap: () => importBackup(context),
           ),
           ListTile(
             leading: Icon(Icons.delete_forever, color: theme.colorScheme.error),

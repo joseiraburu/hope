@@ -7,6 +7,20 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# Complemento propio de vídeo (packages/hope_media): flutter create añade los
+# archivos de compilación de Android (Gradle) y Windows (CMake) de esta versión
+# de Flutter sin tocar el código que ya existe. Lo que la plantilla trae de
+# ejemplo (app de ejemplo, pruebas y la interfaz de plataforma) no se usa.
+(
+  cd packages/hope_media
+  flutter create --no-pub --template=plugin --platforms=android,windows \
+    --org io.github.joseiraburu --project-name hope_media .
+  rm -rf example test android/src/test \
+    lib/hope_media_platform_interface.dart lib/hope_media_method_channel.dart
+  # Comprobación: los archivos de compilación tienen que existir.
+  ls android/build.gradle* android/src/main/AndroidManifest.xml windows/CMakeLists.txt
+)
+
 flutter create \
   --platforms=android,ios,windows,web \
   --project-name hope \

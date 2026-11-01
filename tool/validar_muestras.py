@@ -6,6 +6,7 @@ está disponible, ffprobe) para comprobar que es válido. Escribe anotaciones de
 GitHub Actions con el resultado.
 
 Uso: python3 tool/validar_muestras.py build/muestras
+     python3 tool/validar_muestras.py build/muestras_video --videos
 """
 import datetime
 import json
@@ -107,32 +108,103 @@ def comprobar_pdf(d, nombre):
         errores.append(f"{nombre}: no contiene el título")
 
 
-def comprobar_mp4(d, nombre, obligatorio):
+def leer_mp4(p):
+    """Datos de un MP4: con PyAV (FFmpeg) si está instalado, si no con ffprobe."""
+    try:
+        import av
+    except ImportError:
+        av = None
+    if av is not None:
+        with av.open(p) as c:
+            st = c.streams.video[0]
+            primero = None
+            n = 0
+            for frame in c.decode(st):
+                if primero is None:
+                    primero = frame.to_image()
+                n += 1
+            dur = float(c.duration / av.time_base) if c.duration else n / float(st.average_rate)
+            return {"codec": st.codec_context.name, "ancho": st.codec_context.width,
+                    "alto": st.codec_context.height, "fotogramas": n, "segundos": dur,
+                    "primero": primero}
+    if shutil.which("ffprobe"):
+        out = subprocess.run(
+            ["ffprobe", "-v", "error", "-select_streams", "v:0", "-count_frames",
+             "-show_entries", "stream=codec_name,width,height,nb_read_frames",
+             "-show_entries", "format=duration", "-of", "json", p],
+            capture_output=True, text=True)
+        if out.returncode != 0:
+            raise RuntimeError(out.stderr.strip()[:300])
+        info = json.loads(out.stdout)
+        st = info["streams"][0]
+        primero = None
+        if shutil.which("ffmpeg"):
+            from PIL import Image
+            png = os.path.splitext(p)[0] + "_tmp.png"
+            r = subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", p, "-frames:v", "1", png],
+                               capture_output=True, text=True)
+            if r.returncode == 0 and os.path.exists(png):
+                primero = Image.open(png)
+                primero.load()
+                os.remove(png)
+        return {"codec": st["codec_name"], "ancho": st["width"], "alto": st["height"],
+                "fotogramas": int(st.get("nb_read_frames", 0)),
+                "segundos": float(info["format"]["duration"]), "primero": primero}
+    return None
+
+
+def comprobar_mp4(d, nombre, obligatorio, fotogramas=None, segundos=None, patron=False):
     p = os.path.join(d, nombre)
     if not os.path.exists(p):
         if obligatorio:
             errores.append(f"falta {nombre}")
         return
-    if not shutil.which("ffprobe"):
-        notas.append(f"{nombre}: {mb(p):.2f} MB (sin ffprobe para analizarlo)")
+    try:
+        info = leer_mp4(p)
+    except Exception as e:  # noqa: BLE001 - se informa de cualquier fallo al leerlo
+        errores.append(f"{nombre}: no se puede leer: {e}")
         return
-    out = subprocess.run(
-        ["ffprobe", "-v", "error", "-select_streams", "v:0", "-count_frames",
-         "-show_entries", "stream=codec_name,width,height,nb_read_frames,avg_frame_rate",
-         "-show_entries", "format=duration", "-of", "json", p],
-        capture_output=True, text=True)
-    if out.returncode != 0:
-        errores.append(f"{nombre}: ffprobe no puede leerlo: {out.stderr.strip()[:300]}")
+    if info is None:
+        notas.append(f"{nombre}: {mb(p):.2f} MB (sin PyAV ni ffprobe para analizarlo)")
         return
-    info = json.loads(out.stdout)
-    st = info["streams"][0]
-    dur = float(info["format"]["duration"])
-    notas.append(f"{nombre}: {st['codec_name']} {st['width']}x{st['height']}, "
-                 f"{st.get('nb_read_frames')} fotogramas, {dur:.2f} s, {mb(p):.2f} MB")
-    if st["codec_name"] != "h264":
-        errores.append(f"{nombre}: códec {st['codec_name']}")
+    texto = (f"{nombre}: {info['codec']} {info['ancho']}x{info['alto']}, "
+             f"{info['fotogramas']} fotogramas, {info['segundos']:.2f} s, {mb(p):.2f} MB")
+    img = info["primero"]
+    if img is not None:
+        w, h = img.size
+        arriba = img.convert("RGB").getpixel((w // 2, h // 6))
+        abajo = img.convert("RGB").getpixel((w // 2, h * 5 // 6))
+        texto += f"; colores {arriba} / {abajo}"
+        if patron:
+            if not (arriba[0] > 170 and arriba[2] < 90):
+                errores.append(f"{nombre}: arriba debería ser rojo y es {arriba}")
+            if not (abajo[2] > 170 and abajo[0] < 90):
+                errores.append(f"{nombre}: abajo debería ser azul y es {abajo}")
+        base = os.path.splitext(p)[0]
+        img.save(base + "_fotograma1.png")
+    notas.append(texto)
+    if info["codec"] != "h264":
+        errores.append(f"{nombre}: códec {info['codec']}")
+    if fotogramas is not None and not (fotogramas - 5 <= info["fotogramas"] <= fotogramas):
+        errores.append(f"{nombre}: {info['fotogramas']} fotogramas (se esperaban {fotogramas})")
+    if segundos is not None and abs(info["segundos"] - segundos) > 0.3:
+        errores.append(f"{nombre}: dura {info['segundos']:.2f} s (se esperaban {segundos})")
     if mb(p) >= 8:
         errores.append(f"{nombre}: pesa {mb(p):.2f} MB")
+
+
+def comprobar_videos(d):
+    """Vídeos creados en un dispositivo (tool/prueba_video.sh)."""
+    videos = sorted(f for f in os.listdir(d) if f.endswith(".mp4"))
+    if not videos:
+        notas.append("No hay vídeos: este equipo no tiene codificador H.264 (se usaría el GIF).")
+    for v in videos:
+        if v.startswith("patron_"):
+            comprobar_mp4(d, v, True, fotogramas=30, segundos=1, patron=True)
+        elif v.startswith("registro_"):
+            comprobar_mp4(d, v, True, fotogramas=600, segundos=20)
+        else:
+            comprobar_mp4(d, v, True)
 
 
 def escapar(texto):
@@ -140,22 +212,25 @@ def escapar(texto):
 
 
 def main():
-    d = sys.argv[1] if len(sys.argv) > 1 else "build/muestras"
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    d = args[0] if args else "build/muestras"
     if not os.path.isdir(d):
         print(f"::error title=Muestras::No existe {d}")
         sys.exit(1)
-    comprobar_png(d, "grafica.png", True)
-    comprobar_png(d, "grafica_por_parametro.png", True)
-    comprobar_png(d, "grafica_en.png", False)
-    comprobar_png(d, "registro_1min.png", False)
-    comprobar_gif(d, "grafica.gif", 150, 10, 8, True)
-    comprobar_gif(d, "registro.gif", 150, 10, 8, False)
-    comprobar_xlsx(d, "informe.xlsx")
-    comprobar_pdf(d, "informe.pdf")
-    comprobar_mp4(d, "registro.mp4", False)
-    for extra in sorted(os.listdir(d)):
-        if extra.endswith(".mp4") and extra != "registro.mp4":
-            comprobar_mp4(d, extra, False)
+    if "--videos" in sys.argv:
+        comprobar_videos(d)
+    else:
+        comprobar_png(d, "grafica.png", True)
+        comprobar_png(d, "grafica_por_parametro.png", True)
+        comprobar_png(d, "grafica_en.png", False)
+        comprobar_png(d, "registro_1min.png", True)
+        comprobar_png(d, "registro_1min_sin_fecha.png", True)
+        comprobar_png(d, "registro_1min_en.png", False)
+        comprobar_png(d, "registro_sin_eventos.png", False)
+        comprobar_gif(d, "grafica.gif", 150, 10, 8, True)
+        comprobar_gif(d, "registro.gif", 150, 10, 8, True)
+        comprobar_xlsx(d, "informe.xlsx")
+        comprobar_pdf(d, "informe.pdf")
     if notas:
         print("::notice title=Muestras::" + escapar("\n".join(notas)))
     if errores:

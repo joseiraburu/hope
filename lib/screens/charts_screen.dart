@@ -269,6 +269,7 @@ class _ChartsScreenState extends State<ChartsScreen> {
         child: LayoutBuilder(builder: (context, constraints) {
           final wide = constraints.maxWidth >= 900;
           final controls = _Controls(
+            compact: !wide,
             rangeLabel: rangeName(_range),
             rangeText: formatDayRange(data.from, data.to, lang),
             ranges: {for (final r in ChartRange.values) r: rangeName(r)},
@@ -321,7 +322,7 @@ class _ChartsScreenState extends State<ChartsScreen> {
             return Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SizedBox(width: 340, child: SingleChildScrollView(child: controls)),
+                SizedBox(width: 400, child: SingleChildScrollView(child: controls)),
                 const VerticalDivider(width: 1),
                 Expanded(
                   child: Column(
@@ -479,6 +480,7 @@ class _ChartPainter extends CustomPainter {
 /// Controles: fechas, agrupación, vista, parámetros y tratamientos.
 class _Controls extends StatelessWidget {
   const _Controls({
+    required this.compact,
     required this.rangeLabel,
     required this.rangeText,
     required this.ranges,
@@ -494,6 +496,9 @@ class _Controls extends StatelessWidget {
     required this.style,
   });
 
+  /// En el móvil, los controles van en filas deslizables para dejar sitio
+  /// a la gráfica.
+  final bool compact;
   final String rangeLabel;
   final String rangeText;
   final Map<ChartRange, String> ranges;
@@ -541,59 +546,73 @@ class _Controls extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              SegmentedButton<Grouping>(
-                segments: [
-                  ButtonSegment(value: Grouping.day, label: Text(s.byDay)),
-                  ButtonSegment(value: Grouping.week, label: Text(s.byWeek)),
-                  ButtonSegment(value: Grouping.month, label: Text(s.byMonth)),
-                ],
-                selected: {grouping},
-                showSelectedIcon: false,
-                style: const ButtonStyle(visualDensity: VisualDensity.compact),
-                onSelectionChanged: (v) => onGrouping(v.first),
-              ),
-              SegmentedButton<ChartMode>(
-                segments: [
-                  ButtonSegment(value: ChartMode.combined, label: Text(s.viewCombined)),
-                  ButtonSegment(value: ChartMode.perParam, label: Text(s.viewPerParam)),
-                  ButtonSegment(value: ChartMode.table, label: Text(s.viewTable)),
-                ],
-                selected: {mode},
-                showSelectedIcon: false,
-                style: const ButtonStyle(visualDensity: VisualDensity.compact),
-                onSelectionChanged: (v) => onMode(v.first),
-              ),
-            ],
-          ),
+          _flow([
+            SegmentedButton<Grouping>(
+              segments: [
+                ButtonSegment(value: Grouping.day, label: Text(s.byDay)),
+                ButtonSegment(value: Grouping.week, label: Text(s.byWeek)),
+                ButtonSegment(value: Grouping.month, label: Text(s.byMonth)),
+              ],
+              selected: {grouping},
+              showSelectedIcon: false,
+              style: const ButtonStyle(visualDensity: VisualDensity.compact),
+              onSelectionChanged: (v) => onGrouping(v.first),
+            ),
+            SegmentedButton<ChartMode>(
+              segments: [
+                ButtonSegment(value: ChartMode.combined, label: Text(s.viewCombined)),
+                ButtonSegment(value: ChartMode.perParam, label: Text(s.viewPerParam)),
+                ButtonSegment(value: ChartMode.table, label: Text(s.viewTable)),
+              ],
+              selected: {mode},
+              showSelectedIcon: false,
+              style: const ButtonStyle(visualDensity: VisualDensity.compact),
+              onSelectionChanged: (v) => onMode(v.first),
+            ),
+          ]),
           const SizedBox(height: 6),
-          Wrap(
-            spacing: 6,
-            runSpacing: 4,
-            children: [
-              for (final p in Param.values)
-                FilterChip(
-                  avatar: LegendSample(param: p, style: style),
-                  label: Text(paramName(p, s)),
-                  selected: enabled.contains(p),
-                  showCheckmark: false,
-                  visualDensity: VisualDensity.compact,
-                  onSelected: (_) => onToggleParam(p),
-                ),
+          _flow([
+            for (final p in Param.values)
               FilterChip(
-                avatar: const Icon(Icons.medication_outlined, size: 18),
-                label: Text(s.showTreatments),
-                selected: showTreatments,
+                avatar: LegendSample(param: p, style: style),
+                label: Text(paramName(p, s)),
+                selected: enabled.contains(p),
                 showCheckmark: false,
                 visualDensity: VisualDensity.compact,
-                onSelected: onShowTreatments,
+                onSelected: (_) => onToggleParam(p),
               ),
-            ],
-          ),
+            FilterChip(
+              avatar: const Icon(Icons.medication_outlined, size: 18),
+              label: Text(s.showTreatments),
+              selected: showTreatments,
+              showCheckmark: false,
+              visualDensity: VisualDensity.compact,
+              onSelected: onShowTreatments,
+            ),
+          ]),
+        ],
+      ),
+    );
+  }
+
+  /// En el móvil, una fila deslizable; en el escritorio, filas que se ajustan.
+  Widget _flow(List<Widget> children) {
+    if (!compact) {
+      return Wrap(
+        spacing: 8,
+        runSpacing: 6,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: children,
+      );
+    }
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (var i = 0; i < children.length; i++) ...[
+            if (i > 0) const SizedBox(width: 6),
+            children[i],
+          ],
         ],
       ),
     );

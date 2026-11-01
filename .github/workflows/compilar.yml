@@ -1,7 +1,8 @@
 # Compila HOPE automáticamente en cada cambio:
-#   - análisis y pruebas
+#   - análisis y pruebas (y validación de los archivos que se exportan)
 #   - APK de Android
 #   - instalador y versión portable de Windows
+#   - prueba del vídeo MP4 en Windows y en un emulador de Android
 # Para publicar una versión descargable en «Releases»: pestaña Actions →
 # «Compilar HOPE» → «Run workflow» → marcar «Publicar versión». También se
 # publica al subir una etiqueta "v0.1.0", "v0.2.0"...
@@ -116,7 +117,8 @@ jobs:
       - name: Mostrar el error de compilación
         if: failure()
         run: |
-          echo "::error title=Android::$(tail -n 80 build.log 2>/dev/null | sed -e 's/%/%25/g' -e 's/\r//g' | sed ':a;N;$!ba;s/\n/%0A/g')"
+          detalle=$( (grep -E -A 4 '^e: |error:|What went wrong' build.log | head -n 80; echo ----; tail -n 40 build.log) 2>/dev/null)
+          echo "::error title=Android::$(printf '%s\n' "$detalle" | sed -e 's/%/%25/g' -e 's/\r//g' | sed ':a;N;$!ba;s/\n/%0A/g')"
       - run: |
           mkdir -p dist
           cp build/app/outputs/flutter-apk/app-release.apk "dist/HOPE-${VERSION}-android.apk"
@@ -152,7 +154,8 @@ jobs:
         if: failure()
         shell: bash
         run: |
-          echo "::error title=Windows::$(tail -n 80 build.log 2>/dev/null | sed -e 's/%/%25/g' -e 's/\r//g' | sed ':a;N;$!ba;s/\n/%0A/g')"
+          detalle=$( (grep -E 'error|warning C' build.log | head -n 60; echo ----; tail -n 30 build.log) 2>/dev/null)
+          echo "::error title=Windows::$(printf '%s\n' "$detalle" | sed -e 's/%/%25/g' -e 's/\r//g' | sed ':a;N;$!ba;s/\n/%0A/g')"
       - name: Incluir las bibliotecas de Visual C++
         shell: pwsh
         run: |
@@ -175,6 +178,59 @@ jobs:
           name: HOPE-windows
           path: dist/*
           if-no-files-found: error
+      - name: Probar el vídeo MP4 (Media Foundation)
+        shell: bash
+        run: bash tool/prueba_video.sh windows "$(pwd -W)/build/muestras_video"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validar los vídeos con FFmpeg
+        shell: bash
+        run: |
+          python -m pip install --quiet av pillow
+          python tool/validar_muestras.py build/muestras_video --videos
+
+  video-android:
+    name: Android (vídeo en el emulador)
+    needs: pruebas
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Activar la aceleración del emulador (KVM)
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - run: bash tool/preparar_plataformas.sh
+      - name: Compilar la prueba
+        run: |
+          set -o pipefail
+          flutter build apk --debug --target=integration_test/video_test.dart 2>&1 | tee build.log
+      - name: Mostrar el error de compilación
+        if: failure()
+        run: |
+          detalle=$( (grep -E -A 4 '^e: |error:|What went wrong' build.log | head -n 80; echo ----; tail -n 40 build.log) 2>/dev/null)
+          echo "::error title=Android (prueba)::$(printf '%s\n' "$detalle" | sed -e 's/%/%25/g' -e 's/\r//g' | sed ':a;N;$!ba;s/\n/%0A/g')"
+      - name: Emulador y prueba del vídeo
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          ram-size: 4096M
+          disk-size: 6000M
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: bash tool/prueba_video.sh emulator-5554
 
   publicar:
     name: Publicar versión

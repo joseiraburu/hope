@@ -37,6 +37,15 @@ Future<File> writeExportFile(String name, List<int> bytes) async {
   return file;
 }
 
+/// Prepara la ruta de un archivo exportado que escribirá otro proceso (el
+/// codificador de vídeo), vaciando antes la carpeta temporal.
+Future<String> prepareExportPath(String name) async {
+  await cleanExportFiles();
+  final dir = await _exportDir();
+  await dir.create(recursive: true);
+  return '${dir.path}${Platform.pathSeparator}$name';
+}
+
 /// La primera vez que se comparte algo, avisa de que son datos de salud.
 /// Devuelve false si el usuario cancela.
 Future<bool> confirmHealthDataShare(BuildContext context) async {

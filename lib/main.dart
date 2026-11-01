@@ -7,6 +7,8 @@
 // elección) cualquier versión posterior. Se distribuye con la esperanza de
 // que sea útil, pero SIN NINGUNA GARANTÍA. Consulta el archivo LICENSE.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
@@ -15,6 +17,7 @@ import 'app.dart';
 import 'core/body_geometry.dart';
 import 'core/config.dart';
 import 'data/stores.dart';
+import 'export/share_service.dart';
 import 'state/app_controller.dart';
 
 Future<void> main() async {
@@ -35,4 +38,6 @@ Future<void> main() async {
   );
   await controller.init();
   runApp(HopeApp(controller: controller));
+  // Archivos que quedaran de exportaciones anteriores.
+  unawaited(cleanExportFiles());
 }

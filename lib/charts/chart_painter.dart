@@ -121,7 +121,8 @@ class ChartLayout {
     laneHeight = math.max(20.0, fontSize * 1.9);
     lanesHeight = showLanes && data.lanes.isNotEmpty ? data.lanes.length * laneHeight + 6 : 0;
     final axisHeight = fontSize * 2.0;
-    final left = fontSize * 4.2;
+    // El margen izquierdo es más ancho cuando hay franjas, para sus nombres.
+    final left = fontSize * (lanesHeight > 0 ? 5.8 : 4.2);
     plot = Rect.fromLTRB(
       left,
       fontSize * 0.9,
@@ -149,12 +150,22 @@ class ChartLayout {
 
   Rect laneRect(int k) => Rect.fromLTWH(plot.left, lanesTop + 3 + k * laneHeight, plot.width, laneHeight);
 
-  /// Cuatro gráficas apiladas (vista por parámetro).
+  /// Alto de la etiqueta encima de cada gráfica de la vista por parámetro.
+  double get paramLabelHeight => fontSize * 1.35;
+
+  /// Cuatro gráficas apiladas (vista por parámetro), cada una con su
+  /// etiqueta encima.
   List<Rect> get paramRects {
-    final gap = fontSize * 0.9;
+    final gap = fontSize * 0.5;
     final h = (plot.height - gap * 3) / 4;
     return [
-      for (var k = 0; k < 4; k++) Rect.fromLTWH(plot.left, plot.top + k * (h + gap), plot.width, h)
+      for (var k = 0; k < 4; k++)
+        Rect.fromLTWH(
+          plot.left,
+          plot.top + k * (h + gap) + paramLabelHeight,
+          plot.width,
+          h - paramLabelHeight,
+        )
     ];
   }
 
@@ -348,7 +359,7 @@ void paintChart(
       paintText(
         canvas,
         paramName(p, s),
-        Offset(rect.left + 6, rect.top + 2),
+        Offset(rect.left, rect.top - layout.paramLabelHeight * 0.95),
         _ts(style, style.series[p]!, scale: 0.92, weight: FontWeight.w600),
       );
     }
@@ -444,13 +455,14 @@ void paintChart(
           );
         }
       }
+      // Nombre del medicamento en el margen izquierdo, sin tapar las marcas.
       paintText(
         canvas,
         lane.name,
-        Offset(rect.left + 4, rect.center.dy),
+        Offset(rect.left - 6, rect.center.dy),
         _ts(style, color, scale: 0.85, weight: FontWeight.w600),
-        anchor: Alignment.centerLeft,
-        maxWidth: rect.width * 0.4,
+        anchor: Alignment.centerRight,
+        maxWidth: rect.left - 8,
       );
     }
   }

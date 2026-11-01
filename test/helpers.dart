@@ -33,6 +33,13 @@ Future<AppController> testController({
   return c;
 }
 
+/// Guarda un archivo generado en build/muestras para validarlo en la CI.
+void saveSample(String name, List<int> bytes) {
+  final f = File('build/muestras/$name');
+  f.parent.createSync(recursive: true);
+  f.writeAsBytesSync(bytes);
+}
+
 /// Carga Roboto y los iconos de Material del SDK para que las capturas y
 /// las muestras se vean con la tipografía real.
 Future<void> loadRealFonts() async {

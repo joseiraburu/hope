@@ -4,7 +4,7 @@
 
 # HOPE
 
-**HOPE** es una app gratuita y de código abierto para registrar y **mostrar** el dolor neuropático crónico: dónde duele, con qué intensidad y cómo son los pinchazos, quemazones o punzadas. Convierte cada estado en una animación en bucle que se puede guardar en un histórico y, en próximas versiones, compartir como vídeo con el médico, la familia o las amistades.
+**HOPE** es una app gratuita y de código abierto para registrar y **mostrar** el dolor neuropático crónico: dónde duele, con qué intensidad y cómo son los pinchazos, quemazones o punzadas. Convierte cada estado en una animación en bucle que se guarda en un histórico, se comparte como imagen, GIF o vídeo con el médico, la familia o las amistades, y se sigue en gráficas junto a los tratamientos.
 
 Nace de la experiencia de una persona que lleva 15 años con una neuropatía sensitiva de fibra fina idiopática, con el deseo de ayudar a cualquiera que viva algo parecido.
 
@@ -21,22 +21,30 @@ Las versiones listas para instalar están en la pestaña **[Releases](https://gi
 | Windows (sin instalar) | `HOPE-…-windows-portable.zip` | Descomprímelo y abre `hope.exe`. |
 | iPhone / iPad | — | Pendiente (fase 3, como versión web instalable). |
 
-## Qué hace (fase 1)
+## Qué hace (versión 0.2)
 
-- **Silueta** de mujer u hombre, vista de frente y de espaldas, con 14 zonas: pies, pantorrillas, muslos, glúteos, perineo, abdomen, pecho, lumbar, espalda, hombros, brazos, manos, cara y cabeza. Se marcan tocando el cuerpo o desde el botón «Zonas».
+- **Silueta** de mujer u hombre, vista de frente y de espaldas, con 16 zonas: pies, pantorrillas, muslos, glúteos, perineo, abdomen, pecho, lumbar, espalda, hombros, brazos, manos, cuello (por delante y por detrás), cara y cabeza. Se marcan tocando el cuerpo o desde el botón «Zonas».
+- **Lado izquierdo, derecho o ambos** en pies, pantorrillas, muslos, glúteos, hombros, brazos y manos. Los lados son siempre los del paciente; las letras **D** e **I** junto a la silueta lo recuerdan.
 - **Dolor de fondo (0–10):** las zonas marcadas se colorean de transparente a rojo intenso y laten suavemente.
 - **Eventos:** intensidad (0–10), frecuencia (10–500 por minuto, en escala logarítmica) y tipo (pinchazo, quemazón, rasgadura, arañazo, punzada, golpe). Cada tipo tiene su propia chispa animada.
 - **Animación en bucle de 10 s**, idéntica cada vez que se reproduce un registro.
 - **Registro** con fecha y hora automáticas, nota opcional y **histórico** con miniaturas animadas, filtro por fechas, edición, «usar como punto de partida», borrado con deshacer y registros atrasados.
-- **Superficie afectada** estimada en % del cuerpo.
-- **Accesibilidad:** controles grandes con botones + / −, valores escribibles, lector de pantalla, atajos de teclado en Windows (R registrar, H histórico, E vídeo), tema claro/oscuro y modo «Reducir movimiento».
-- **Privacidad:** todo se guarda solo en el dispositivo. Sin cuentas, servidores, publicidad ni analítica.
+- **Superficie afectada** estimada en % del cuerpo (cada lado cuenta la mitad de su zona).
+- **Compartir un registro** como imagen con todos los eventos de un minuto, GIF animado del bucle o vídeo MP4 (con el codificador que ya incluyen Android y Windows; si un equipo no puede, se ofrece el GIF). Se puede ocultar la fecha.
+- **Tratamientos:** lidocaína, fentanilo y oxicodona de partida, y los medicamentos que añadas. Vía, dosis, fecha (puntual o periodo), pauta, efectos adversos y notas.
+- **Gráficas** de los cuatro parámetros en escala relativa común, por día, semana o mes (media de los registros; los huecos sin datos no se rellenan), con los tratamientos superpuestos, cursor con la silueta de ese momento, reproducción, vista por parámetro y tabla. Comparación de 7, 14 o 28 días antes y después de un tratamiento.
+- **Exportar** las gráficas como imagen PNG, GIF animado, Excel (resumen, registros y tratamientos) o informe PDF para la consulta.
+- **Copia de seguridad** de todos los datos en un archivo JSON, para guardarla o pasarla a otro dispositivo.
+- **Accesibilidad:** controles grandes con botones + / −, valores escribibles, lector de pantalla, atajos de teclado en Windows (R registrar, C compartir, H histórico, G gráficos, T tratamientos), tema claro/oscuro y modo «Reducir movimiento».
+- **Privacidad:** todo se guarda solo en el dispositivo. Sin cuentas, servidores, publicidad ni analítica. La primera vez que compartes algo, HOPE te recuerda que son datos de salud.
+
+Las estadísticas son solo descriptivas: HOPE no indica dosis ni valora si un tratamiento funciona. Los cambios que se ven en las gráficas no demuestran que un tratamiento sea la causa; coméntalos con tu equipo médico.
 
 ## Hoja de ruta
 
-1. **Fase 1 – versión mínima** *(esta versión)*: pantalla principal, animación, registro, histórico y ajustes. Android y Windows.
-2. **Fase 2 – compartir y analizar:** exportar vídeo MP4 para WhatsApp y correo, gráficas de los cuatro parámetros, copia de seguridad y CSV, compilación para iOS.
-3. **Fase 3 – pulido y publicación:** informe PDF para el médico, recordatorios, versión web instalable (PWA) y publicación en tiendas.
+1. **Fase 1 – versión mínima** *(0.1)*: pantalla principal, animación, registro, histórico y ajustes. Android y Windows.
+2. **Fase 2 – compartir y analizar** *(0.2, esta versión)*: lateralidad, cuello, compartir imagen/GIF/MP4, tratamientos, gráficas, exportación a PNG, GIF, Excel y PDF, y copia de seguridad.
+3. **Fase 3 – pulido y publicación:** recordatorios, compilación para iOS, versión web instalable (PWA) y publicación en tiendas.
 
 ## Para desarrolladores
 
@@ -60,15 +68,19 @@ Las carpetas de plataforma no se guardan en el repositorio: se generan con el sc
 
 ```bash
 flutter analyze
-flutter test
+flutter test                              # pruebas y archivos de muestra en build/muestras
+python3 tool/validar_muestras.py build/muestras
+bash tool/prueba_video.sh windows         # vídeo MP4 en un dispositivo (o emulator-5554)
 ```
+
+En cada cambio, la compilación automática valida con herramientas estándar (Pillow, openpyxl, pypdf y FFmpeg) las imágenes, GIF, Excel, PDF y vídeos que genera la app, y prueba el vídeo MP4 en Windows y en un emulador de Android.
 
 ### Compilar
 
 ```bash
 flutter build apk --release        # Android → build/app/outputs/flutter-apk/app-release.apk
 flutter build windows --release    # Windows → build/windows/x64/runner/Release/
-iscc /DMyAppVersion=0.1.0 installer\hope.iss   # instalador de Windows (Inno Setup 6)
+iscc /DMyAppVersion=0.2.0 installer\hope.iss   # instalador de Windows (Inno Setup 6)
 flutter build ios --release        # iOS (en un Mac, con cuenta de Apple Developer)
 ```
 
@@ -81,25 +93,31 @@ flutter build ios --release        # iOS (en un Mac, con cuenta de Apple Develop
 ```
 lib/
   animation/   motor de la animación (chispas, pulso) y dibujo de la silueta
+  charts/      agrupación por día/semana/mes, comparación antes/después y dibujo de las gráficas
   core/        configuración, geometría del cuerpo, generador aleatorio determinista
-  data/        guardado local en archivos JSON
+  data/        guardado local en archivos JSON y copia de seguridad
+  export/      PNG, GIF (codificador propio), Excel, PDF, vídeo MP4 y compartir
   l10n/        textos en español e inglés
-  models/      registro y ajustes
-  screens/     pantalla principal, histórico, reproductor y ajustes
+  models/      registro, tratamiento y ajustes
+  screens/     pantalla principal, histórico, reproductor, tratamientos, gráficos y ajustes
   state/       estado de la app y de los controles
   widgets/     componentes reutilizables
+packages/hope_media/   complemento propio de vídeo MP4 (MediaCodec en Android, Media Foundation en Windows)
+integration_test/      prueba del vídeo en un dispositivo
 assets/config/
   hope_config.json     zonas, % de superficie, tipos de evento y colores (editable)
   body_geometry.json   siluetas (generadas con tool/gen_body.py)
 tool/
   gen_body.py              genera la geometría y una vista previa: python3 tool/gen_body.py --preview vista.svg
-  preparar_plataformas.sh  prepara las carpetas de plataforma
+  preparar_plataformas.sh  prepara las carpetas de plataforma (y las del complemento de vídeo)
+  validar_muestras.py      comprueba los archivos exportados
+  prueba_video.sh          prueba del vídeo MP4 en un dispositivo
 installer/hope.iss         instalador de Windows (Inno Setup)
 ```
 
 ### Datos
 
-Cada registro guarda: `id`, `fecha_hora` (ISO 8601 con zona horaria), `perfil_sexo`, `intensidad_dolor`, `zonas`, `num_zonas`, `superficie_pct`, `intensidad_eventos`, `tipos_evento`, `frecuencia_eventos`, `semilla_animacion`, `nota` y `video_ruta`. Los porcentajes de superficie son orientativos, basados en la tabla de Lund-Browder para adultos.
+Cada registro guarda: `id`, `fecha_hora` (ISO 8601 con zona horaria), `perfil_sexo`, `intensidad_dolor`, `zonas` (con el lado: `pies_izq`, `pies_der`…), `num_zonas`, `superficie_pct`, `intensidad_eventos`, `tipos_evento`, `frecuencia_eventos`, `semilla_animacion` y `nota`. Los tratamientos se guardan aparte (`hope_tratamientos.json`) con `medicamento`, `via`, `dosis`, `unidad`, `inicio`, `fin`, `pauta`, `efectos_adversos` y `notas`. La copia de seguridad (`HOPE_copia_AAAA-MM-DD.json`) reúne registros, tratamientos, medicamentos y ajustes. Los porcentajes de superficie son orientativos, basados en la tabla de Lund-Browder para adultos.
 
 ### Añadir un idioma
 
