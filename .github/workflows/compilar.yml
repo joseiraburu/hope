@@ -51,6 +51,11 @@ jobs:
         run: |
           set -o pipefail
           flutter test --reporter expanded 2>&1 | tee test.log
+      - name: Validar los archivos generados
+        run: |
+          python3 -m venv /tmp/val
+          /tmp/val/bin/pip install --quiet pillow openpyxl pypdf
+          /tmp/val/bin/python tool/validar_muestras.py build/muestras
       - name: Mostrar las pruebas fallidas
         if: failure()
         run: |

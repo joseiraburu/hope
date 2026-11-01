@@ -8,12 +8,12 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hope/app.dart';
 import 'package:hope/models/app_settings.dart';
 import 'package:hope/models/pain_record.dart';
 import 'package:hope/models/treatment.dart';
+import 'package:hope/screens/charts_screen.dart';
 import 'package:hope/screens/treatment_editor_screen.dart';
 import 'package:hope/screens/treatments_screen.dart';
 import 'package:hope/widgets/compare_sheet.dart';
@@ -22,23 +22,6 @@ import 'package:hope/state/app_controller.dart';
 import 'helpers.dart';
 
 final _shotKey = GlobalKey();
-
-Future<void> loadRealFonts() async {
-  final root = Platform.environment['FLUTTER_ROOT'];
-  if (root == null) return;
-  final dir = Directory('$root/bin/cache/artifacts/material_fonts');
-  if (!dir.existsSync()) return;
-  Future<ByteData> read(File f) async => ByteData.view((await f.readAsBytes()).buffer);
-  final roboto = FontLoader('Roboto');
-  final icons = FontLoader('MaterialIcons');
-  for (final f in dir.listSync().whereType<File>()) {
-    final name = f.uri.pathSegments.last;
-    if (name.startsWith('Roboto-') && name.endsWith('.ttf')) roboto.addFont(read(f));
-    if (name.startsWith('MaterialIcons-Regular')) icons.addFont(read(f));
-  }
-  await roboto.load();
-  await icons.load();
-}
 
 Future<void> setScreen(WidgetTester tester, Size logical, {double dpr = 2.0}) async {
   tester.view.devicePixelRatio = dpr;
@@ -195,5 +178,89 @@ void main() {
     nav.push(MaterialPageRoute(builder: (_) => TreatmentEditorScreen(editing: treatments[1])));
     await settle(tester);
     await capture(tester, '12_editor_tratamiento');
+  });
+
+  List<PainRecord> recentRecords() {
+    final today = DateTime.now();
+    final start = DateTime(today.year, today.month, today.day - 59, 9);
+    return [
+      for (var d = 0; d < 60; d++)
+        if (d % 5 != 4)
+          sampleRecord(
+            at: start.add(Duration(days: d)),
+            pain: d < 32 ? 7 - (d % 3) : 4 - (d % 2),
+            freq: d < 32 ? 200 - (d % 4) * 10 : 90 + (d % 3) * 10,
+            events: d < 32 ? 7 : 5,
+            zones: d < 32
+                ? const ['pies_izq', 'pies_der', 'pantorrillas_izq', 'pantorrillas_der', 'manos_der']
+                : const ['pies_izq', 'pies_der'],
+          ),
+    ];
+  }
+
+  List<Treatment> recentTreatments() {
+    final today = DateTime.now();
+    return [
+      Treatment(
+        id: 'lido1',
+        medicationId: 'lidocaina',
+        medicationName: 'Lidocaína',
+        route: 'iv',
+        dose: 300,
+        unit: 'mg',
+        start: DateTime(today.year, today.month, today.day - 27, 10),
+      ),
+      Treatment(
+        id: 'lido2',
+        medicationId: 'lidocaina',
+        medicationName: 'Lidocaína',
+        route: 'iv',
+        dose: 300,
+        unit: 'mg',
+        start: DateTime(today.year, today.month, today.day - 6, 10),
+      ),
+      Treatment(
+        id: 'fent',
+        medicationId: 'fentanilo',
+        medicationName: 'Fentanilo',
+        route: 'transdermica',
+        dose: 12.5,
+        unit: 'ug_h',
+        start: DateTime(today.year, today.month, today.day - 50, 9),
+        end: DateTime(today.year, today.month, today.day - 15, 9),
+      ),
+    ];
+  }
+
+  testWidgets('captura: gráficos en el móvil', (tester) async {
+    await setScreen(tester, const Size(393, 852));
+    final controller = await testController(records: recentRecords(), treatments: recentTreatments());
+    await tester.pumpWidget(shot(controller));
+    await tester.pump(const Duration(milliseconds: 300));
+    final nav = tester.state<NavigatorState>(find.byType(Navigator).first);
+    nav.push(MaterialPageRoute(builder: (_) => const ChartsScreen()));
+    await settle(tester);
+    await capture(tester, '20_graficos');
+
+    await tester.tap(find.text('Por parámetro'));
+    await settle(tester);
+    await capture(tester, '21_graficos_por_parametro');
+
+    await tester.tap(find.text('Tabla'));
+    await settle(tester);
+    await capture(tester, '22_graficos_tabla');
+  });
+
+  testWidgets('captura: gráficos en el escritorio', (tester) async {
+    await setScreen(tester, const Size(1280, 800), dpr: 1.0);
+    final controller = await testController(records: recentRecords(), treatments: recentTreatments());
+    await tester.pumpWidget(shot(controller));
+    await tester.pump(const Duration(milliseconds: 300));
+    final nav = tester.state<NavigatorState>(find.byType(Navigator).first);
+    nav.push(MaterialPageRoute(builder: (_) => const ChartsScreen()));
+    await settle(tester);
+    await tester.tap(find.text('Semana'));
+    await settle(tester);
+    await capture(tester, '23_graficos_escritorio');
   });
 }

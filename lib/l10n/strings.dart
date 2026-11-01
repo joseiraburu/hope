@@ -374,4 +374,56 @@ class S {
       _t({'es': 'HOPE · Informe de evolución', 'en': 'HOPE · Progress report'});
   String generatedOn(String date) => _t({'es': 'Generado el $date', 'en': 'Generated on $date'});
   String weekOf(String range) => _t({'es': 'Semana $range', 'en': 'Week $range'});
+
+  // ------------------------------------------------- exportación (Excel/PDF)
+  String get sheetSummary => _t({'es': 'Resumen', 'en': 'Summary'});
+  String get sheetRecords => _t({'es': 'Registros', 'en': 'Entries'});
+  String get sheetTreatments => _t({'es': 'Tratamientos', 'en': 'Treatments'});
+  String get sheetInfo => _t({'es': 'Información', 'en': 'Information'});
+  String get colPeriodStart => _t({'es': 'Inicio del periodo', 'en': 'Period start'});
+  String get colPeriodEnd => _t({'es': 'Fin del periodo', 'en': 'Period end'});
+  String get colDateTime => _t({'es': 'Fecha y hora', 'en': 'Date and time'});
+  String get colSilhouette => _t({'es': 'Silueta', 'en': 'Silhouette'});
+  String get colPain => _t({'es': 'Dolor de fondo (0-10)', 'en': 'Background pain (0-10)'});
+  String get colZones => _t({'es': 'Zonas afectadas', 'en': 'Affected areas'});
+  String get colZoneCount => _t({'es': 'Nº de zonas', 'en': 'No. of areas'});
+  String get colSurface => _t({'es': 'Superficie (%)', 'en': 'Surface (%)'});
+  String get colEventIntensity =>
+      _t({'es': 'Eventos - intensidad (0-10)', 'en': 'Events - intensity (0-10)'});
+  String get colEventFrequency =>
+      _t({'es': 'Eventos - frecuencia (/min)', 'en': 'Events - frequency (/min)'});
+  String get colEventTypes => _t({'es': 'Tipos de evento', 'en': 'Event types'});
+  String get colNote => _t({'es': 'Nota', 'en': 'Note'});
+  String get colMedication => _t({'es': 'Medicamento', 'en': 'Medication'});
+  String get colRoute => _t({'es': 'Vía', 'en': 'Route'});
+  String get colDose => _t({'es': 'Dosis', 'en': 'Dose'});
+  String get colUnit => _t({'es': 'Unidad', 'en': 'Unit'});
+  String get colStart => _t({'es': 'Inicio', 'en': 'Start'});
+  String get colEnd => _t({'es': 'Fin', 'en': 'End'});
+  String get colKind => _t({'es': 'Tipo', 'en': 'Type'});
+  String get colPeriodKind => _t({'es': 'Periodo', 'en': 'Period'});
+  String get colActiveTreatments => _t({'es': 'Tratamientos activos', 'en': 'Active treatments'});
+  String colStat(String param, String stat) => '$param - $stat';
+  String get infoApp => _t({'es': 'Aplicación', 'en': 'Application'});
+  String get infoRange => _t({'es': 'Fechas', 'en': 'Dates'});
+  String get infoGrouping => _t({'es': 'Agrupación', 'en': 'Grouping'});
+  String get infoExported => _t({'es': 'Exportado el', 'en': 'Exported on'});
+  String get infoScale => _t({'es': 'Escala de la gráfica', 'en': 'Chart scale'});
+  String get infoColumns => _t({'es': 'Columnas', 'en': 'Columns'});
+  String get infoColumnsText => _t({
+        'es': 'Resumen: un periodo por fila con el número de registros y la media, el mínimo y '
+            'el máximo de cada parámetro (vacío si no hay registros). Registros: un registro por '
+            'fila; la frecuencia de eventos queda vacía cuando no hay eventos. Tratamientos: '
+            'los tratamientos activos en estas fechas; sin fecha de fin = administración puntual.',
+        'en': 'Summary: one period per row with the number of entries and the mean, minimum '
+            'and maximum of each parameter (empty when there are no entries). Entries: one '
+            'entry per row; event frequency is empty when there are no events. Treatments: '
+            'treatments active in these dates; no end date = single administration.'
+      });
+  String get infoNotice => _t({'es': 'Aviso', 'en': 'Notice'});
+  String get summaryByPeriod => _t({'es': 'Resumen por periodo', 'en': 'Summary by period'});
+  String get groupedByDay => _t({'es': 'Agrupado por días', 'en': 'Grouped by day'});
+  String get groupedByWeek =>
+      _t({'es': 'Agrupado por semanas (de lunes a domingo)', 'en': 'Grouped by week (Monday to Sunday)'});
+  String get groupedByMonth => _t({'es': 'Agrupado por meses', 'en': 'Grouped by month'});
 }

@@ -2,6 +2,7 @@
 
 import 'dart:io';
 
+import 'package:flutter/services.dart';
 import 'package:hope/core/body_geometry.dart';
 import 'package:hope/core/config.dart';
 import 'package:hope/data/stores.dart';
@@ -30,4 +31,23 @@ Future<AppController> testController({
   );
   await c.init();
   return c;
+}
+
+/// Carga Roboto y los iconos de Material del SDK para que las capturas y
+/// las muestras se vean con la tipografía real.
+Future<void> loadRealFonts() async {
+  final root = Platform.environment['FLUTTER_ROOT'];
+  if (root == null) return;
+  final dir = Directory('$root/bin/cache/artifacts/material_fonts');
+  if (!dir.existsSync()) return;
+  Future<ByteData> read(File f) async => ByteData.view((await f.readAsBytes()).buffer);
+  final roboto = FontLoader('Roboto');
+  final icons = FontLoader('MaterialIcons');
+  for (final f in dir.listSync().whereType<File>()) {
+    final name = f.uri.pathSegments.last;
+    if (name.startsWith('Roboto-') && name.endsWith('.ttf')) roboto.addFont(read(f));
+    if (name.startsWith('MaterialIcons-Regular')) icons.addFont(read(f));
+  }
+  await roboto.load();
+  await icons.load();
 }

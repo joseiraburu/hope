@@ -1,7 +1,7 @@
 name: hope
 description: "HOPE: registro visual del dolor neuropático crónico. Software libre (GPL-3.0)."
 publish_to: 'none'
-version: 0.1.0+1
+version: 0.2.0+2
 
 environment:
   sdk: '>=3.5.0 <4.0.0'
@@ -12,6 +12,9 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   path_provider: ^2.1.4
+  share_plus: ^13.3.1
+  file_selector: ^1.1.0
+  pdf: ^3.13.1
 
 dev_dependencies:
   flutter_test:
