@@ -15,6 +15,7 @@ PainRecord sample({String? id, DateTime? at}) => PainRecord(
       sex: 'female',
       painIntensity: 6,
       zones: const ['pies_izq', 'pies_der', 'manos_izq'],
+      zoneCount: 2,
       surfacePct: 12,
       eventIntensity: 7,
       eventTypes: const ['pinchazo', 'quemazon'],
