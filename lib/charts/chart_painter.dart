@@ -109,10 +109,10 @@ class ChartStyle {
 /// Máximo «redondo» del eje para valores reales.
 double niceMax(double maxValue, double minimum) {
   final v = math.max(maxValue, minimum);
-  for (final step in const [5.0, 10, 20, 25, 30, 40, 50, 60, 80, 100, 150, 200, 250, 300, 400, 500]) {
+  for (final step in const <double>[5, 10, 20, 25, 30, 40, 50, 60, 80, 100, 150, 200, 250, 300, 400, 500]) {
     if (v <= step) return step;
   }
-  return (v / 100).ceil() * 100;
+  return (v / 100).ceil() * 100.0;
 }
 
 /// Geometría de la gráfica, compartida por el dibujo y los toques.

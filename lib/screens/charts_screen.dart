@@ -2,7 +2,6 @@
 // Copyright (C) 2026 joseiraburu y colaboradores. Licencia GPL-3.0-or-later.
 
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
