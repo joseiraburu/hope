@@ -2,9 +2,9 @@
 // Copyright (C) 2026 joseiraburu y colaboradores. Licencia GPL-3.0-or-later.
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../state/app_controller.dart';
+import 'dialogs.dart';
 
 /// Barra vertical grande con botones + / − y valor editable.
 ///
@@ -47,33 +47,15 @@ class VerticalControl extends StatelessWidget {
 
   Future<void> _askValue(BuildContext context) async {
     final s = AppScope.read(context).strings;
-    final controller = TextEditingController();
-    final result = await showDialog<int>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(plainLabel),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          decoration: InputDecoration(
-            hintText: s.typeValue,
-            helperText: s.rangeHint(minValue, maxValue),
-          ),
-          onSubmitted: (v) => Navigator.of(ctx).pop(int.tryParse(v)),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(s.cancel)),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(int.tryParse(controller.text)),
-            child: Text(s.accept),
-          ),
-        ],
-      ),
+    final text = await askText(
+      context,
+      title: plainLabel,
+      hint: s.typeValue,
+      helper: s.rangeHint(minValue, maxValue),
+      numeric: true,
     );
-    controller.dispose();
-    if (result != null) onTypedValue(result);
+    final value = int.tryParse(text ?? '');
+    if (value != null) onTypedValue(value);
   }
 
   @override

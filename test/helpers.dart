@@ -7,6 +7,7 @@ import 'package:hope/core/config.dart';
 import 'package:hope/data/stores.dart';
 import 'package:hope/models/app_settings.dart';
 import 'package:hope/models/pain_record.dart';
+import 'package:hope/models/treatment.dart';
 import 'package:hope/state/app_controller.dart';
 
 AppConfig loadConfig() =>
@@ -17,6 +18,7 @@ BodyGeometry loadGeometry() =>
 
 Future<AppController> testController({
   List<PainRecord>? records,
+  List<Treatment>? treatments,
   AppSettings settings = const AppSettings(firstRunDone: true, language: 'es'),
 }) async {
   final c = AppController(
@@ -24,6 +26,7 @@ Future<AppController> testController({
     geometry: loadGeometry(),
     recordStore: MemoryRecordStore(records),
     settingsStore: MemorySettingsStore(settings),
+    treatmentStore: MemoryTreatmentStore(TreatmentData(treatments: treatments ?? const [])),
   );
   await c.init();
   return c;

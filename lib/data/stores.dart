@@ -6,6 +6,7 @@ import 'dart:io';
 
 import '../models/app_settings.dart';
 import '../models/pain_record.dart';
+import '../models/treatment.dart';
 
 /// Almacén del histórico de registros.
 abstract class RecordStore {
@@ -19,7 +20,33 @@ abstract class SettingsStore {
   Future<void> save(AppSettings settings);
 }
 
+/// Tratamientos y lista de medicamentos del usuario.
+class TreatmentData {
+  const TreatmentData({this.medications = const [], this.treatments = const []});
+
+  /// Medicamentos añadidos por el usuario y cambios a los predefinidos.
+  final List<MedicationDef> medications;
+  final List<Treatment> treatments;
+}
+
+/// Almacén de los tratamientos.
+abstract class TreatmentStore {
+  Future<TreatmentData> load();
+  Future<void> save(TreatmentData data);
+}
+
 /// Versiones en memoria (para pruebas).
+class MemoryTreatmentStore implements TreatmentStore {
+  MemoryTreatmentStore([this._data = const TreatmentData()]);
+  TreatmentData _data;
+
+  @override
+  Future<TreatmentData> load() async => _data;
+
+  @override
+  Future<void> save(TreatmentData data) async => _data = data;
+}
+
 class MemoryRecordStore implements RecordStore {
   MemoryRecordStore([List<PainRecord>? initial]) : _records = [...?initial];
   List<PainRecord> _records;
@@ -126,4 +153,48 @@ class JsonFileSettingsStore implements SettingsStore {
   @override
   Future<void> save(AppSettings settings) =>
       writeFileAtomic(file, jsonEncode(settings.toJson()));
+}
+
+/// Tratamientos guardados en un archivo JSON local.
+class JsonFileTreatmentStore implements TreatmentStore {
+  JsonFileTreatmentStore(this.directory);
+
+  final Directory directory;
+  Future<void> _queue = Future<void>.value();
+
+  File get file => File('${directory.path}${Platform.pathSeparator}hope_tratamientos.json');
+
+  @override
+  Future<TreatmentData> load() async {
+    if (!await file.exists()) return const TreatmentData();
+    try {
+      final data = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+      return TreatmentData(
+        medications: [
+          for (final m in (data['medicamentos'] as List<dynamic>? ?? const []))
+            MedicationDef.fromJson(m as Map<String, dynamic>)
+        ],
+        treatments: [
+          for (final t in (data['tratamientos'] as List<dynamic>? ?? const []))
+            Treatment.fromJson(t as Map<String, dynamic>)
+        ],
+      );
+    } catch (_) {
+      await _setAsideCorrupt(file);
+      return const TreatmentData();
+    }
+  }
+
+  @override
+  Future<void> save(TreatmentData data) {
+    final text = const JsonEncoder.withIndent(' ').convert({
+      'formato': 'hope-tratamientos',
+      'version': 1,
+      'medicamentos': [for (final m in data.medications) m.toJson()],
+      'tratamientos': [for (final t in data.treatments) t.toJson()],
+    });
+    final next = _queue.then((_) => writeFileAtomic(file, text));
+    _queue = next.catchError((Object _) {});
+    return next;
+  }
 }

@@ -13,6 +13,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hope/app.dart';
 import 'package:hope/models/app_settings.dart';
 import 'package:hope/models/pain_record.dart';
+import 'package:hope/models/treatment.dart';
+import 'package:hope/screens/treatment_editor_screen.dart';
+import 'package:hope/screens/treatments_screen.dart';
+import 'package:hope/widgets/compare_sheet.dart';
 import 'package:hope/state/app_controller.dart';
 
 import 'helpers.dart';
@@ -132,5 +136,61 @@ void main() {
     await tester.pumpWidget(shot(controller));
     await tester.pump(const Duration(milliseconds: 2600));
     await capture(tester, '05_principal_escritorio');
+  });
+
+  testWidgets('captura: tratamientos', (tester) async {
+    await setScreen(tester, const Size(393, 852));
+    final records = [
+      for (var d = 0; d < 40; d++)
+        sampleRecord(
+          at: DateTime(2026, 9, 25).add(Duration(days: d, hours: 9)),
+          pain: d < 20 ? 7 - (d % 3) : 4 - (d % 2),
+          freq: d < 20 ? 180 : 90,
+        ),
+    ];
+    final treatments = [
+      Treatment(
+        id: 't1',
+        medicationId: 'lidocaina',
+        medicationName: 'Lidocaína',
+        route: 'iv',
+        dose: 300,
+        unit: 'mg',
+        start: DateTime(2026, 10, 15, 10),
+        notes: 'Perfusión en la unidad del dolor',
+        adverseEffects: const ['mareo'],
+      ),
+      Treatment(
+        id: 't2',
+        medicationId: 'fentanilo',
+        medicationName: 'Fentanilo',
+        route: 'transdermica',
+        dose: 25,
+        unit: 'ug_h',
+        start: DateTime(2026, 9, 20, 9),
+        end: DateTime(2026, 10, 30, 9),
+        schedule: 'cada 72 h',
+      ),
+    ];
+    final controller = await testController(records: records, treatments: treatments);
+    await tester.pumpWidget(shot(controller));
+    await tester.pump(const Duration(milliseconds: 300));
+    final nav = tester.state<NavigatorState>(find.byType(Navigator).first);
+    nav.push(MaterialPageRoute(builder: (_) => const TreatmentsScreen()));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    await capture(tester, '10_tratamientos');
+
+    showCompareSheet(tester.element(find.byType(TreatmentsScreen)), treatments.first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    await capture(tester, '11_antes_despues');
+    nav.pop();
+    await tester.pump(const Duration(milliseconds: 600));
+
+    nav.push(MaterialPageRoute(builder: (_) => TreatmentEditorScreen(editing: treatments[1])));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    await capture(tester, '12_editor_tratamiento');
   });
 }
