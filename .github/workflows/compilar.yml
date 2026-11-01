@@ -167,8 +167,14 @@ jobs:
           else
             TAG="v$(grep '^version:' pubspec.yaml | sed 's/version: *//; s/+.*//')"
           fi
-          gh release create "$TAG" dist/* \
-            --target "$GITHUB_SHA" \
-            --title "HOPE ${TAG#v}" \
-            --notes-file docs/notas-version.md \
-            --prerelease
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            # La versión ya existe: se sustituyen sus archivos por los nuevos.
+            echo "La versión $TAG ya existe: se actualizan sus archivos."
+            gh release upload "$TAG" dist/* --clobber
+          else
+            gh release create "$TAG" dist/* \
+              --target "$GITHUB_SHA" \
+              --title "HOPE ${TAG#v}" \
+              --notes-file docs/notas-version.md \
+              --prerelease
+          fi
