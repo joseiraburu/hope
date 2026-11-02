@@ -35,6 +35,7 @@ Future<void> main() async {
     recordStore: JsonFileRecordStore(dir),
     settingsStore: JsonFileSettingsStore(dir),
     treatmentStore: JsonFileTreatmentStore(dir),
+    foodStore: JsonFileFoodStore(dir),
   );
   await controller.init();
   runApp(HopeApp(controller: controller));

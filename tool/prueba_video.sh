@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Prueba del vídeo MP4 en un dispositivo (emulador de Android o Windows) y
-# anotaciones de GitHub Actions con el resultado.
+# Prueba del vídeo MP4 en un dispositivo (emulador de Android, simulador de
+# iPhone o Windows) y anotaciones de GitHub Actions con el resultado.
 #
 # Uso: bash tool/prueba_video.sh <dispositivo> [carpeta para los vídeos]
 #   bash tool/prueba_video.sh emulator-5554
+#   bash tool/prueba_video.sh <UDID del simulador de iPhone>
 #   bash tool/prueba_video.sh windows "$PWD/build/muestras_video"
 #
 # Cada intento tiene un límite de tiempo (HOPE_LIMITE_PRUEBA, en segundos;
@@ -23,7 +24,8 @@ if [ -n "$out" ]; then
   args+=("--dart-define=HOPE_MUESTRAS=$out")
 fi
 
-escapar() { sed -e 's/%/%25/g' -e 's/\r//g' | sed ':a;N;$!ba;s/\n/%0A/g'; }
+# Une las líneas con %0A para las anotaciones (awk: funciona también en macOS).
+escapar() { sed -e 's/%/%25/g' -e 's/\r//g' | awk '{ if (NR > 1) printf "%%0A"; printf "%s", $0 }'; }
 
 # ¿Es un dispositivo Android? Entonces se guarda su registro (logcat).
 android=0

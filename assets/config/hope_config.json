@@ -82,5 +82,30 @@
     { "id": "nauseas",       "es": "Náuseas",       "en": "Nausea" },
     { "id": "somnolencia",   "es": "Somnolencia",   "en": "Drowsiness" },
     { "id": "estrenimiento", "es": "Estreñimiento", "en": "Constipation" }
+  ],
+  "foods": [
+    { "id": "bread",           "es": "Pan",                                 "en": "Bread" },
+    { "id": "pasta",           "es": "Pasta",                               "en": "Pasta" },
+    { "id": "rice",            "es": "Arroz",                               "en": "Rice" },
+    { "id": "red_meat",        "es": "Carne roja",                          "en": "Red meat" },
+    { "id": "white_meat",      "es": "Carne blanca",                        "en": "White meat" },
+    { "id": "processed_meat",  "es": "Embutidos",                           "en": "Processed meat" },
+    { "id": "fish",            "es": "Pescado",                             "en": "Fish" },
+    { "id": "seafood",         "es": "Marisco",                             "en": "Shellfish" },
+    { "id": "eggs",            "es": "Huevos",                              "en": "Eggs" },
+    { "id": "dairy",           "es": "Lácteos",                             "en": "Dairy" },
+    { "id": "legumes",         "es": "Legumbres",                           "en": "Legumes" },
+    { "id": "vegetables",      "es": "Verduras",                            "en": "Vegetables" },
+    { "id": "fruit",           "es": "Fruta",                               "en": "Fruit" },
+    { "id": "nuts",            "es": "Frutos secos",                        "en": "Nuts" },
+    { "id": "vegetable_fat",   "es": "Grasa vegetal (aceite, aguacate)",    "en": "Vegetable fat (oil, avocado)" },
+    { "id": "animal_fat",      "es": "Grasa animal (mantequilla, manteca)", "en": "Animal fat (butter, lard)" },
+    { "id": "sugar",           "es": "Azúcar y dulces",                     "en": "Sugar and sweets" },
+    { "id": "ultra_processed", "es": "Ultraprocesados",                     "en": "Ultra-processed food" },
+    { "id": "fried_food",      "es": "Fritos",                              "en": "Fried food" },
+    { "id": "spicy",           "es": "Picante",                             "en": "Spicy food" },
+    { "id": "coffee",          "es": "Café",                                "en": "Coffee" },
+    { "id": "alcohol",         "es": "Alcohol",                             "en": "Alcohol" },
+    { "id": "soft_drinks",     "es": "Refrescos",                           "en": "Soft drinks" }
   ]
 }

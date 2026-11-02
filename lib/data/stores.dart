@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import '../models/app_settings.dart';
+import '../models/food.dart';
 import '../models/pain_record.dart';
 import '../models/treatment.dart';
 
@@ -35,7 +36,33 @@ abstract class TreatmentStore {
   Future<void> save(TreatmentData data);
 }
 
+/// Alimentos del usuario y lo que se comió cada día.
+class FoodData {
+  const FoodData({this.foods = const [], this.days = const []});
+
+  /// Alimentos añadidos por el usuario y cambios a los básicos (ocultos).
+  final List<FoodDef> foods;
+  final List<FoodDay> days;
+}
+
+/// Almacén de la alimentación.
+abstract class FoodStore {
+  Future<FoodData> load();
+  Future<void> save(FoodData data);
+}
+
 /// Versiones en memoria (para pruebas).
+class MemoryFoodStore implements FoodStore {
+  MemoryFoodStore([this._data = const FoodData()]);
+  FoodData _data;
+
+  @override
+  Future<FoodData> load() async => _data;
+
+  @override
+  Future<void> save(FoodData data) async => _data = data;
+}
+
 class MemoryTreatmentStore implements TreatmentStore {
   MemoryTreatmentStore([this._data = const TreatmentData()]);
   TreatmentData _data;
@@ -192,6 +219,51 @@ class JsonFileTreatmentStore implements TreatmentStore {
       'version': 1,
       'medicamentos': [for (final m in data.medications) m.toJson()],
       'tratamientos': [for (final t in data.treatments) t.toJson()],
+    });
+    final next = _queue.then((_) => writeFileAtomic(file, text));
+    _queue = next.catchError((Object _) {});
+    return next;
+  }
+}
+
+/// Alimentación guardada en un archivo JSON local, aparte de los registros de
+/// dolor: añadir esta función no toca los datos de versiones anteriores.
+class JsonFileFoodStore implements FoodStore {
+  JsonFileFoodStore(this.directory);
+
+  final Directory directory;
+  Future<void> _queue = Future<void>.value();
+
+  File get file => File('${directory.path}${Platform.pathSeparator}hope_alimentacion.json');
+
+  @override
+  Future<FoodData> load() async {
+    if (!await file.exists()) return const FoodData();
+    try {
+      final data = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+      return FoodData(
+        foods: [
+          for (final f in (data['alimentos'] as List<dynamic>? ?? const []))
+            FoodDef.fromJson(f as Map<String, dynamic>)
+        ],
+        days: [
+          for (final d in (data['dias'] as List<dynamic>? ?? const []))
+            FoodDay.fromJson(d as Map<String, dynamic>)
+        ],
+      );
+    } catch (_) {
+      await _setAsideCorrupt(file);
+      return const FoodData();
+    }
+  }
+
+  @override
+  Future<void> save(FoodData data) {
+    final text = const JsonEncoder.withIndent(' ').convert({
+      'formato': 'hope-alimentacion',
+      'version': 1,
+      'alimentos': [for (final f in data.foods) f.toJson()],
+      'dias': [for (final d in data.days) d.toJson()],
     });
     final next = _queue.then((_) => writeFileAtomic(file, text));
     _queue = next.catchError((Object _) {});

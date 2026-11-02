@@ -8,6 +8,8 @@ import '../export/backup_flow.dart';
 import '../state/app_controller.dart';
 import '../widgets/dialogs.dart';
 import '../widgets/logo.dart';
+import 'food_screen.dart';
+import 'foods_screen.dart';
 
 /// Ajustes: perfil, apariencia, movimiento, datos y «Acerca de».
 class SettingsScreen extends StatelessWidget {
@@ -100,6 +102,21 @@ class SettingsScreen extends StatelessWidget {
             title: Text(s.hideDate),
             value: settings.hideDateInExports,
             onChanged: (v) => app.updateSettings(settings.copyWith(hideDateInExports: v)),
+          ),
+          section(s.food),
+          ListTile(
+            leading: const Icon(Icons.restaurant),
+            title: Text(s.food),
+            subtitle: Text('${s.foodLogTab} · ${s.foodHistoryTab}'),
+            onTap: () => Navigator.of(context)
+                .push(MaterialPageRoute<void>(builder: (_) => const FoodScreen())),
+          ),
+          ListTile(
+            leading: const Icon(Icons.tune),
+            title: Text(s.myFoods),
+            subtitle: Text(s.myFoodsHelp),
+            onTap: () => Navigator.of(context)
+                .push(MaterialPageRoute<void>(builder: (_) => const FoodsScreen())),
           ),
           section(s.data),
           Padding(

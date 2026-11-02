@@ -10,11 +10,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hope/app.dart';
+import 'package:hope/data/stores.dart';
 import 'package:hope/models/app_settings.dart';
+import 'package:hope/models/food.dart';
 import 'package:hope/models/pain_record.dart';
 import 'package:hope/models/treatment.dart';
 import 'package:hope/export/record_share.dart';
 import 'package:hope/screens/charts_screen.dart';
+import 'package:hope/screens/food_pain_screen.dart';
+import 'package:hope/screens/food_screen.dart';
+import 'package:hope/screens/foods_screen.dart';
 import 'package:hope/screens/home_screen.dart';
 import 'package:hope/screens/settings_screen.dart';
 import 'package:hope/screens/treatment_editor_screen.dart';
@@ -293,5 +298,81 @@ void main() {
     await tester.tap(find.text('Semana'));
     await settle(tester);
     await capture(tester, '23_graficos_escritorio');
+  });
+
+  Future<AppController> foodController(String language) async {
+    final today = DateTime.now();
+    DateTime day(int ago) => DateTime(today.year, today.month, today.day - ago);
+    final c = AppController(
+      config: loadConfig(),
+      geometry: loadGeometry(),
+      recordStore: MemoryRecordStore(recentRecords()),
+      settingsStore: MemorySettingsStore(AppSettings(firstRunDone: true, language: language)),
+      treatmentStore: MemoryTreatmentStore(),
+      foodStore: MemoryFoodStore(FoodData(
+        foods: const [FoodDef(id: 'ali_kefir001', customName: 'Kéfir')],
+        days: [
+          FoodDay(
+            date: day(1),
+            morning: const ['bread', 'coffee', 'ali_kefir001'],
+            afternoon: const ['pasta', 'red_meat', 'vegetable_fat'],
+          ),
+          FoodDay(date: day(3), morning: const ['coffee', 'fruit'], afternoon: const ['fish', 'vegetables']),
+          FoodDay(
+            date: day(6),
+            morning: const ['bread', 'dairy'],
+            afternoon: const ['fried_food', 'sugar', 'alcohol'],
+          ),
+        ],
+      )),
+    );
+    await c.init();
+    return c;
+  }
+
+  testWidgets('captura: alimentación', (tester) async {
+    await setScreen(tester, const Size(393, 852));
+    final controller = await foodController('es');
+    await tester.pumpWidget(shot(controller));
+    await tester.pump(const Duration(milliseconds: 300));
+    final nav = tester.state<NavigatorState>(find.byType(Navigator).first);
+    nav.push(MaterialPageRoute(builder: (_) => const FoodScreen()));
+    await settle(tester);
+    await capture(tester, '30_alimentacion_registrar');
+
+    await tester.tap(find.text('Mañana'));
+    await settle(tester);
+    await capture(tester, '31_alimentacion_hoja_manana');
+    await tester.tap(find.text('Listo'));
+    await settle(tester);
+
+    await tester.tap(find.text('Historial'));
+    await settle(tester);
+    await capture(tester, '32_alimentacion_historial');
+
+    final today = DateTime.now();
+    nav.push(MaterialPageRoute(
+      builder: (_) => FoodPainScreen(date: DateTime(today.year, today.month, today.day - 6)),
+    ));
+    await settle(tester);
+    await capture(tester, '33_alimentacion_y_dolor');
+
+    nav.push(MaterialPageRoute(builder: (_) => const FoodsScreen()));
+    await settle(tester);
+    await capture(tester, '34_mis_alimentos');
+  });
+
+  testWidgets('captura: alimentación y dolor en inglés', (tester) async {
+    await setScreen(tester, const Size(393, 852));
+    final controller = await foodController('en');
+    await tester.pumpWidget(shot(controller));
+    await tester.pump(const Duration(milliseconds: 300));
+    final today = DateTime.now();
+    final nav = tester.state<NavigatorState>(find.byType(Navigator).first);
+    nav.push(MaterialPageRoute(
+      builder: (_) => FoodPainScreen(date: DateTime(today.year, today.month, today.day - 3)),
+    ));
+    await settle(tester);
+    await capture(tester, '35_food_pain_en');
   });
 }

@@ -1,7 +1,7 @@
 name: hope
 description: "HOPE: registro visual del dolor neuropático crónico. Software libre (GPL-3.0)."
 publish_to: 'none'
-version: 0.2.0+2
+version: 0.3.0+3
 
 environment:
   sdk: '>=3.5.0 <4.0.0'

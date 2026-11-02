@@ -1,8 +1,10 @@
 # Compila HOPE automáticamente en cada cambio:
 #   - análisis y pruebas (y validación de los archivos que se exportan)
 #   - APK de Android
+#   - app de iOS sin firmar (.ipa)
 #   - instalador y versión portable de Windows
-#   - prueba del vídeo MP4 en Windows y en un emulador de Android
+#   - prueba del vídeo MP4 en Windows, en un emulador de Android y en un
+#     simulador de iPhone
 # Para publicar una versión descargable en «Releases»: pestaña Actions →
 # «Compilar HOPE» → «Run workflow» → marcar «Publicar versión». También se
 # publica al subir una etiqueta "v0.1.0", "v0.2.0"...
@@ -128,6 +130,78 @@ jobs:
           path: dist/*.apk
           if-no-files-found: error
 
+  ios:
+    name: iOS (app sin firmar)
+    needs: pruebas
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Versión
+        run: |
+          echo "VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: *//; s/+.*//')" >> "$GITHUB_ENV"
+      - run: bash tool/preparar_plataformas.sh
+      - name: Compilar iOS
+        # Sin firma: Apple exige una cuenta de desarrollador para firmar. El
+        # .ipa se puede firmar e instalar después (AltStore, Sideloadly,
+        # Xcode) o subir a TestFlight con la firma del proyecto.
+        run: |
+          set -o pipefail
+          flutter build ios --release --no-codesign 2>&1 | tee build.log
+      - name: Mostrar el error de compilación
+        if: failure()
+        run: |
+          detalle=$( (grep -E -A 4 'error:|Error \(Xcode\)|Failed to build' build.log | head -n 80; echo ----; tail -n 40 build.log) 2>/dev/null)
+          echo "::error title=iOS::$(printf '%s\n' "$detalle" | sed -e 's/%/%25/g' -e 's/\r//g' | awk '{ if (NR > 1) printf "%%0A"; printf "%s", $0 }')"
+      - name: Empaquetar la app (.ipa sin firmar)
+        run: |
+          mkdir -p dist/Payload
+          cp -R build/ios/iphoneos/Runner.app dist/Payload/
+          (cd dist && zip -qry "HOPE-${VERSION}-ios-sin-firmar.ipa" Payload && rm -rf Payload)
+          ls -la dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: HOPE-ios
+          path: dist/*.ipa
+          if-no-files-found: error
+
+  video-ios:
+    name: iOS (vídeo en el simulador)
+    needs: pruebas
+    runs-on: macos-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: bash tool/preparar_plataformas.sh
+      - name: Arrancar un simulador de iPhone
+        run: |
+          udid=$(xcrun simctl list devices available -j | python3 -c "
+          import json, sys
+          devices = json.load(sys.stdin)['devices']
+          for runtime in sorted(devices, reverse=True):
+              if 'iOS' not in runtime:
+                  continue
+              for d in devices[runtime]:
+                  if d['name'].startswith('iPhone'):
+                      print(d['udid'])
+                      sys.exit(0)
+          sys.exit('No hay ningún simulador de iPhone')
+          ")
+          echo "Simulador: $udid"
+          echo "SIMULADOR=$udid" >> "$GITHUB_ENV"
+          xcrun simctl boot "$udid"
+          xcrun simctl bootstatus "$udid" -b
+      - name: Prueba del vídeo
+        timeout-minutes: 30
+        run: bash tool/prueba_video.sh "$SIMULADOR"
+
   windows:
     name: Windows (instalador)
     needs: pruebas
@@ -239,7 +313,7 @@ jobs:
   publicar:
     name: Publicar versión
     if: startsWith(github.ref, 'refs/tags/v') || inputs.publicar
-    needs: [android, windows]
+    needs: [android, ios, windows]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5

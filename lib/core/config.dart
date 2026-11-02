@@ -150,6 +150,7 @@ class AppConfig {
     this.routes = const [],
     this.units = const [],
     this.adverseEffects = const [],
+    this.foods = const [],
   })  : zoneById = {for (final z in zones) z.id: z},
         eventTypeById = {for (final t in eventTypes) t.id: t} {
     for (final z in zones) {
@@ -178,6 +179,10 @@ class AppConfig {
   final List<Labeled> routes;
   final List<Labeled> units;
   final List<Labeled> adverseEffects;
+
+  /// Alimentos básicos de la pestaña Alimentación (clave estable y nombre
+  /// en cada idioma).
+  final List<Labeled> foods;
 
   final Map<String, ZoneDef> _partZone = {};
   final Map<String, int> _partOrder = {};
@@ -214,6 +219,7 @@ class AppConfig {
       routes: labeled('routes'),
       units: labeled('units'),
       adverseEffects: labeled('adverseEffects'),
+      foods: labeled('foods'),
     );
   }
 
@@ -309,6 +315,9 @@ class AppConfig {
   String unitName(String id, String lang) => unitById(id)?.name(lang) ?? id;
   String adverseEffectName(String id, String lang) =>
       adverseEffectById(id)?.name(lang) ?? id;
+
+  // ----------------------------------------------------------- alimentación
+  Labeled? foodById(String id) => _find(foods, id);
 
   List<Presentation> presentationsFor(String medicationId) =>
       [for (final p in presentations) if (p.medication == medicationId) p];

@@ -10,10 +10,12 @@ import '../core/config.dart';
 import '../data/stores.dart';
 import '../l10n/strings.dart';
 import '../models/app_settings.dart';
+import '../models/food.dart';
 import '../models/pain_record.dart';
 import '../models/treatment.dart';
 
-/// Estado global: configuración, histórico, tratamientos y preferencias.
+/// Estado global: configuración, histórico, tratamientos, alimentación y
+/// preferencias.
 class AppController extends ChangeNotifier {
   AppController({
     required this.config,
@@ -21,13 +23,16 @@ class AppController extends ChangeNotifier {
     required this.recordStore,
     required this.settingsStore,
     TreatmentStore? treatmentStore,
-  }) : treatmentStore = treatmentStore ?? MemoryTreatmentStore();
+    FoodStore? foodStore,
+  })  : treatmentStore = treatmentStore ?? MemoryTreatmentStore(),
+        foodStore = foodStore ?? MemoryFoodStore();
 
   final AppConfig config;
   final BodyGeometry geometry;
   final RecordStore recordStore;
   final SettingsStore settingsStore;
   final TreatmentStore treatmentStore;
+  final FoodStore foodStore;
 
   List<PainRecord> _records = [];
   AppSettings _settings = const AppSettings();
@@ -35,6 +40,12 @@ class AppController extends ChangeNotifier {
 
   /// Cambios del usuario a los medicamentos predefinidos y los que añade.
   List<MedicationDef> _medicationEntries = [];
+
+  /// Alimentos añadidos por el usuario y básicos ocultos.
+  List<FoodDef> _foodEntries = [];
+
+  /// Días con comidas, del más reciente al más antiguo.
+  List<FoodDay> _foodDays = [];
 
   AppSettings get settings => _settings;
 
@@ -54,6 +65,9 @@ class AppController extends ChangeNotifier {
     _medicationEntries = [...data.medications];
     _treatments = [...data.treatments];
     _sortTreatments();
+    final food = await foodStore.load();
+    _foodEntries = [...food.foods];
+    _foodDays = _uniqueDays(food.days);
   }
 
   void _sort() => _records.sort((a, b) => b.dateTime.compareTo(a.dateTime));
@@ -97,22 +111,31 @@ class AppController extends ChangeNotifier {
     return removed;
   }
 
-  /// Borra todos los registros, tratamientos y medicamentos añadidos.
+  /// Borra todos los registros, tratamientos, medicamentos añadidos y la
+  /// alimentación.
   Future<void> deleteAll() async {
     _records = [];
     _treatments = [];
     _medicationEntries = [];
+    _foodEntries = [];
+    _foodDays = [];
     notifyListeners();
     await recordStore.saveAll(_records);
     await _saveTreatments();
+    await _saveFood();
   }
 
   /// Sustituye todos los datos (al importar una copia de seguridad).
+  ///
+  /// Las copias anteriores a la versión 0.3 no tienen alimentación
+  /// ([foods] y [foodDays] nulos): entonces se conserva la del dispositivo.
   Future<void> replaceAll({
     required List<PainRecord> records,
     required List<Treatment> treatments,
     required List<MedicationDef> medications,
     AppSettings? settings,
+    List<FoodDef>? foods,
+    List<FoodDay>? foodDays,
   }) async {
     _records = [...records];
     _sort();
@@ -120,9 +143,15 @@ class AppController extends ChangeNotifier {
     _sortTreatments();
     _medicationEntries = [...medications];
     if (settings != null) _settings = settings;
+    final hasFood = foods != null || foodDays != null;
+    if (hasFood) {
+      _foodEntries = [...?foods];
+      _foodDays = _uniqueDays(foodDays ?? const []);
+    }
     notifyListeners();
     await recordStore.saveAll(_records);
     await _saveTreatments();
+    if (hasFood) await _saveFood();
     if (settings != null) await settingsStore.save(settings);
   }
 
@@ -245,6 +274,215 @@ class AppController extends ChangeNotifier {
     final current = medicationById(id);
     if (current == null) return;
     await _upsertMedication(current.copyWith(hidden: hidden));
+  }
+
+  // ------------------------------------------------------------ alimentación
+  Future<void> _saveFood() => foodStore.save(FoodData(foods: _foodEntries, days: _foodDays));
+
+  /// Un registro por día (si hubiera dos, queda el último guardado), del más
+  /// reciente al más antiguo.
+  static List<FoodDay> _uniqueDays(List<FoodDay> days) {
+    final byKey = <String, FoodDay>{};
+    for (final d in days) {
+      final previous = byKey[d.key];
+      final newer = previous == null ||
+          (d.updatedAt != null &&
+              (previous.updatedAt == null || !d.updatedAt!.isBefore(previous.updatedAt!)));
+      if (newer) byKey[d.key] = d;
+    }
+    final list = [for (final d in byKey.values) if (!d.isEmpty) d];
+    list.sort((a, b) => b.date.compareTo(a.date));
+    return list;
+  }
+
+  /// Días con comidas, del más reciente al más antiguo.
+  List<FoodDay> get foodDays => List.unmodifiable(_foodDays);
+
+  /// Entradas de alimentos tal como se guardan (para la copia de seguridad).
+  List<FoodDef> get foodEntries => List.unmodifiable(_foodEntries);
+
+  /// Comidas guardadas de un día (null si no hay).
+  FoodDay? foodDayFor(DateTime day) {
+    final key = dayKey(day);
+    for (final d in _foodDays) {
+      if (d.key == key) return d;
+    }
+    return null;
+  }
+
+  /// Guarda las comidas de un día y sustituye las que hubiera. Un día sin
+  /// ningún alimento se borra.
+  Future<void> saveFoodDay(FoodDay day) async {
+    bool known(String id) => foodById(id) != null;
+    final clean = day.copyWith(
+      morning: [...{for (final id in day.morning) if (known(id)) id}],
+      afternoon: [...{for (final id in day.afternoon) if (known(id)) id}],
+      updatedAt: DateTime.now(),
+    );
+    _foodDays.removeWhere((d) => d.key == clean.key);
+    if (!clean.isEmpty) _foodDays.add(clean);
+    _foodDays.sort((a, b) => b.date.compareTo(a.date));
+    notifyListeners();
+    await _saveFood();
+  }
+
+  /// Borra las comidas de un día y las devuelve (para poder deshacer).
+  Future<FoodDay?> deleteFoodDay(DateTime day) async {
+    final key = dayKey(day);
+    final i = _foodDays.indexWhere((d) => d.key == key);
+    if (i < 0) return null;
+    final removed = _foodDays.removeAt(i);
+    notifyListeners();
+    await _saveFood();
+    return removed;
+  }
+
+  /// Vuelve a poner un día borrado tal como estaba.
+  Future<void> restoreFoodDay(FoodDay day) async {
+    _foodDays.removeWhere((d) => d.key == day.key);
+    if (!day.isEmpty) _foodDays.add(day);
+    _foodDays.sort((a, b) => b.date.compareTo(a.date));
+    notifyListeners();
+    await _saveFood();
+  }
+
+  /// Todos los alimentos: los básicos (en el orden de la configuración) y
+  /// después los añadidos por el usuario.
+  List<FoodDef> get foods {
+    final byId = {for (final f in _foodEntries) f.id: f};
+    final out = <FoodDef>[
+      for (final b in config.foods)
+        FoodDef(id: b.id, hidden: byId[b.id]?.hidden ?? false, builtIn: true),
+    ];
+    for (final f in _foodEntries) {
+      if (config.foodById(f.id) != null) continue;
+      out.add(f);
+    }
+    return out;
+  }
+
+  FoodDef? foodById(String id) {
+    for (final f in foods) {
+      if (f.id == id) return f;
+    }
+    return null;
+  }
+
+  /// Nombre visible: el de la configuración en el idioma de la app para los
+  /// básicos; el que escribió el usuario para los demás.
+  String foodName(String id) {
+    final builtIn = config.foodById(id);
+    if (builtIn != null) return builtIn.name(language);
+    for (final f in _foodEntries) {
+      if (f.id == id) {
+        final name = f.customName;
+        if (name != null && name.trim().isNotEmpty) return name;
+      }
+    }
+    return id;
+  }
+
+  /// Ordena alfabéticamente en el idioma de la app (sin tener en cuenta
+  /// mayúsculas ni tildes).
+  List<FoodDef> sortFoods(Iterable<FoodDef> list) {
+    final sorted = [...list];
+    sorted.sort((a, b) =>
+        normalizeFoodName(foodName(a.id)).compareTo(normalizeFoodName(foodName(b.id))));
+    return sorted;
+  }
+
+  /// Alimentos para elegir: los visibles y los ya elegidos aunque estén
+  /// ocultos, en orden alfabético.
+  List<FoodDef> pickableFoods([Iterable<String> selected = const []]) {
+    final chosen = selected.toSet();
+    return sortFoods([for (final f in foods) if (!f.hidden || chosen.contains(f.id)) f]);
+  }
+
+  /// ¿Aparece este alimento en algún día guardado?
+  bool isFoodUsed(String id) => _foodDays.any((d) => d.contains(id));
+
+  /// Alimentos que aparecen en algún día guardado, en orden alfabético.
+  List<FoodDef> get usedFoods {
+    final used = <String>{for (final d in _foodDays) ...d.foods};
+    return sortFoods([for (final f in foods) if (used.contains(f.id)) f]);
+  }
+
+  /// Busca un alimento con ese nombre, sin distinguir mayúsculas, tildes ni
+  /// espacios, y en los dos idiomas para los básicos («Pan» y «Bread» son el
+  /// mismo). [except] se ignora (al cambiar el nombre de un alimento).
+  FoodDef? findFoodByName(String name, {String? except}) {
+    final wanted = normalizeFoodName(name);
+    if (wanted.isEmpty) return null;
+    for (final f in foods) {
+      if (f.id == except) continue;
+      final builtIn = config.foodById(f.id);
+      if (builtIn != null) {
+        if (builtIn.names.values.any((n) => normalizeFoodName(n) == wanted)) return f;
+      } else if (normalizeFoodName(f.customName ?? '') == wanted) {
+        return f;
+      }
+    }
+    return null;
+  }
+
+  /// Añade un alimento a la lista. Si ya existe uno con ese nombre, no se
+  /// duplica: se devuelve el existente ([existed] = true) y, si estaba
+  /// oculto, se vuelve a mostrar.
+  Future<({FoodDef food, bool existed})> addFood(String name) async {
+    final existing = findFoodByName(name);
+    if (existing != null) {
+      if (existing.hidden) await setFoodHidden(existing.id, false);
+      return (food: foodById(existing.id) ?? existing, existed: true);
+    }
+    final food = FoodDef(id: 'ali_${newUuid().substring(0, 8)}', customName: cleanFoodName(name));
+    _foodEntries.add(food);
+    notifyListeners();
+    await _saveFood();
+    return (food: food, existed: false);
+  }
+
+  Future<void> _upsertFood(FoodDef f) async {
+    final i = _foodEntries.indexWhere((e) => e.id == f.id);
+    if (i < 0) {
+      _foodEntries.add(f);
+    } else {
+      _foodEntries[i] = f;
+    }
+    notifyListeners();
+    await _saveFood();
+  }
+
+  /// Cambia el nombre de un alimento añadido por el usuario. Devuelve false
+  /// si ya hay otro alimento con ese nombre (o si es un alimento básico).
+  Future<bool> renameFood(String id, String name) async {
+    final current = foodById(id);
+    if (current == null || current.builtIn) return false;
+    final clean = cleanFoodName(name);
+    if (clean.isEmpty || findFoodByName(clean, except: id) != null) return false;
+    await _upsertFood(current.copyWith(customName: clean));
+    return true;
+  }
+
+  Future<void> setFoodHidden(String id, bool hidden) async {
+    final current = foodById(id);
+    if (current == null) return;
+    await _upsertFood(current.copyWith(hidden: hidden));
+  }
+
+  /// Borra un alimento añadido por el usuario. Si ya se ha usado algún día
+  /// (o es un alimento básico), solo se oculta para conservar el historial.
+  /// Devuelve true si se ha borrado y false si se ha ocultado.
+  Future<bool> deleteFood(String id) async {
+    final current = foodById(id);
+    if (current == null) return false;
+    if (current.builtIn || isFoodUsed(id)) {
+      await setFoodHidden(id, true);
+      return false;
+    }
+    _foodEntries.removeWhere((f) => f.id == id);
+    notifyListeners();
+    await _saveFood();
+    return true;
   }
 
   // --------------------------------------------------------------- ajustes

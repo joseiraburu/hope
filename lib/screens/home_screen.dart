@@ -21,6 +21,7 @@ import '../widgets/logo.dart';
 import '../widgets/selector_sheets.dart';
 import '../widgets/vertical_control.dart';
 import 'charts_screen.dart';
+import 'food_screen.dart';
 import 'history_screen.dart';
 import 'settings_screen.dart';
 import 'treatments_screen.dart';
@@ -153,6 +154,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TreatmentsScreen()));
   }
 
+  void _openFood() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FoodScreen()));
+  }
+
   /// Los avisos flotan por encima de la barra de botones para no taparla.
   static const _snackMargin = EdgeInsets.fromLTRB(12, 0, 12, 92);
 
@@ -259,6 +264,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               const SingleActivator(LogicalKeyboardKey.keyH): () => _openHistory(),
               const SingleActivator(LogicalKeyboardKey.keyG): _openCharts,
               const SingleActivator(LogicalKeyboardKey.keyT): _openTreatments,
+              const SingleActivator(LogicalKeyboardKey.keyA): _openFood,
             },
           },
           child: Focus(
@@ -378,11 +384,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             tooltip: s.settings,
             icon: const Icon(Icons.more_vert),
             onSelected: (v) {
+              if (v == 'food') _openFood();
               if (v == 'treatments') _openTreatments();
               if (v == 'settings') _openSettings();
               if (v == 'about') showHopeAbout(context);
             },
             itemBuilder: (ctx) => [
+              PopupMenuItem(
+                value: 'food',
+                child: ListTile(leading: const Icon(Icons.restaurant), title: Text(s.food)),
+              ),
               PopupMenuItem(
                 value: 'treatments',
                 child: ListTile(leading: const Icon(Icons.medication_outlined), title: Text(s.treatments)),
