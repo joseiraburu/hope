@@ -214,7 +214,10 @@ void main() {
     expect(find.text('Pan'), findsOneWidget);
     expect(find.text('Carne roja'), findsOneWidget);
     expect(find.text('Máx. 6 · media 5 · 2 registros'), findsOneWidget);
-    expect(find.text('↑ +2 frente a tu media previa'), findsOneWidget);
+    expect(find.text('+2 frente a tu media previa'), findsOneWidget);
+    // Día 1 (media 5) y Día 3 (media 8) están por encima de la media previa (3).
+    expect(find.byIcon(Icons.arrow_upward), findsNWidgets(2));
+    expect(find.text('+5 frente a tu media previa'), findsOneWidget);
     expect(find.text('Tu media de los 7 días previos: 3'), findsOneWidget);
     expect(find.text('Sin registro de dolor'), findsNWidgets(2));
     expect(find.text('Comidas de ese día (1 alimento)'), findsOneWidget);

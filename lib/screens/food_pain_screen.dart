@@ -271,6 +271,7 @@ class _ChartCard extends StatelessWidget {
                       maxColor: scheme.onSurface,
                       baselineColor: scheme.primary,
                       fontScale: fontScale,
+                      fontFamily: theme.textTheme.bodySmall?.fontFamily,
                     ),
                   ),
                 ),
@@ -364,11 +365,20 @@ class _PainDayCard extends StatelessWidget {
       body = Text(s.noPainLogged, style: muted);
     } else {
       final delta = window.deltaFor(day);
-      String? deltaText;
+      Widget? deltaRow;
       if (delta != null) {
         final signed = formatSigned(delta, lang);
-        final arrow = signed == '0' ? '=' : (delta > 0 ? '↑' : '↓');
-        deltaText = s.vsBaseline('$arrow $signed');
+        // Flecha como icono: las fuentes no siempre tienen «↑» y «↓».
+        final icon = signed == '0'
+            ? Icons.remove
+            : (delta > 0 ? Icons.arrow_upward : Icons.arrow_downward);
+        deltaRow = Row(
+          children: [
+            Icon(icon, size: 14, color: theme.colorScheme.onSurfaceVariant),
+            const SizedBox(width: 4),
+            Expanded(child: Text(s.vsBaseline(signed), style: theme.textTheme.bodySmall)),
+          ],
+        );
       }
       body = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -377,7 +387,7 @@ class _PainDayCard extends StatelessWidget {
             s.painDayStats('${day.max}', formatNumber(mean, lang), day.count),
             style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
-          if (deltaText != null) Text(deltaText, style: theme.textTheme.bodySmall),
+          if (deltaRow != null) deltaRow,
           const SizedBox(height: 4),
           for (final r in day.records)
             ListTile(
@@ -528,6 +538,7 @@ class FoodPainChartPainter extends CustomPainter {
     required this.maxColor,
     required this.baselineColor,
     this.fontScale = 1,
+    this.fontFamily,
   });
 
   final FoodPainWindow window;
@@ -540,6 +551,9 @@ class FoodPainChartPainter extends CustomPainter {
   final Color maxColor;
   final Color baselineColor;
   final double fontScale;
+
+  /// Tipografía de la app (la misma que el resto de textos).
+  final String? fontFamily;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -612,6 +626,7 @@ class FoodPainChartPainter extends CustomPainter {
         text: text,
         style: TextStyle(
           color: color,
+          fontFamily: fontFamily ?? 'Roboto',
           fontSize: size * fontScale,
           height: 1.2,
           fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
