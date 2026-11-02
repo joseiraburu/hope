@@ -20,9 +20,13 @@ import 'history_screen.dart';
 /// Devuelve una [RecordAction] si el usuario elige editar, usar como punto
 /// de partida o borrar.
 class RecordPlayerScreen extends StatefulWidget {
-  const RecordPlayerScreen({super.key, required this.recordId});
+  const RecordPlayerScreen({super.key, required this.recordId, this.allowDuplicate = true});
 
   final String recordId;
+
+  /// Muestra «Usar como punto de partida» (solo tiene sentido desde el
+  /// histórico, que vuelve a la pantalla principal).
+  final bool allowDuplicate;
 
   @override
   State<RecordPlayerScreen> createState() => _RecordPlayerScreenState();
@@ -155,11 +159,12 @@ class _RecordPlayerScreenState extends State<RecordPlayerScreen>
                       icon: const Icon(Icons.tune),
                       label: Text(s.edit),
                     ),
-                    OutlinedButton.icon(
-                      onPressed: () => Navigator.of(context).pop(RecordAction.duplicate),
-                      icon: const Icon(Icons.content_copy),
-                      label: Text(s.duplicate),
-                    ),
+                    if (widget.allowDuplicate)
+                      OutlinedButton.icon(
+                        onPressed: () => Navigator.of(context).pop(RecordAction.duplicate),
+                        icon: const Icon(Icons.content_copy),
+                        label: Text(s.duplicate),
+                      ),
                     OutlinedButton.icon(
                       onPressed: () => showRecordShareSheet(context, record),
                       icon: const Icon(Icons.share_outlined),

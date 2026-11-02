@@ -20,6 +20,21 @@ String formatDateTime(DateTime dt, String lang) {
       : '$day ${d.day} $month ${d.year} · $time';
 }
 
+/// «sáb 31 oct 2026» / «Sat Oct 31, 2026»
+String formatDayLong(DateTime dt, String lang) {
+  final d = dt.toLocal();
+  final en = lang == 'en';
+  final day = (en ? _daysEn : _daysEs)[d.weekday - 1];
+  final month = (en ? _monthsEn : _monthsEs)[d.month - 1];
+  return en ? '$day $month ${d.day}, ${d.year}' : '$day ${d.day} $month ${d.year}';
+}
+
+/// «14:24»
+String formatTime(DateTime dt) {
+  final d = dt.toLocal();
+  return '${_two(d.hour)}:${_two(d.minute)}';
+}
+
 /// «31 oct 2026»
 String formatDate(DateTime dt, String lang) {
   final d = dt.toLocal();

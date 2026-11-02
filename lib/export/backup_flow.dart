@@ -22,6 +22,8 @@ Future<void> exportBackup(BuildContext context) async {
     treatments: app.treatments,
     medications: app.medicationEntries,
     settings: app.settings,
+    foods: app.foodEntries,
+    foodDays: app.foodDays,
   ));
   final file = await writeExportFile('HOPE_copia_${isoDate(DateTime.now())}.json', utf8.encode(text));
   if (!context.mounted) return;
@@ -65,6 +67,8 @@ Future<void> importBackup(BuildContext context) async {
     treatments: data.treatments,
     medications: data.medications,
     settings: data.settings?.copyWith(firstRunDone: true),
+    foods: data.foods,
+    foodDays: data.foodDays,
   );
   messenger?.showSnackBar(SnackBar(content: Text(s.backupImported(data.records.length, data.treatments.length))));
 }

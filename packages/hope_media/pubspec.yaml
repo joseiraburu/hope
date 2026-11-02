@@ -1,6 +1,6 @@
 name: hope_media
-description: "Codificación de vídeo MP4 (H.264) para HOPE con los codificadores del sistema (Android y Windows)."
-version: 0.2.0
+description: "Codificación de vídeo MP4 (H.264) para HOPE con los codificadores del sistema (Android, iOS y Windows)."
+version: 0.3.0
 publish_to: 'none'
 
 environment:
@@ -16,6 +16,8 @@ flutter:
     platforms:
       android:
         package: io.github.joseiraburu.hope_media
+        pluginClass: HopeMediaPlugin
+      ios:
         pluginClass: HopeMediaPlugin
       windows:
         pluginClass: HopeMediaPluginCApi

@@ -53,6 +53,12 @@ if [ -f ios/Runner/Info.plist ]; then
   # CFBundleDisplayName suele ser "Hope"; lo dejamos en mayúsculas.
   sed -i.bak 's#<string>Hope</string>#<string>HOPE</string>#' ios/Runner/Info.plist
   rm -f ios/Runner/Info.plist.bak
+  # Idiomas de la app (sin esto, iOS solo informa del inglés y la opción
+  # «Sistema» de Ajustes no elegiría el español), permiso para guardar en
+  # Fotos desde la hoja de compartir y declaración de cifrado para TestFlight.
+  if ! grep -q 'CFBundleLocalizations' ios/Runner/Info.plist; then
+    perl -0pi -e 's#</dict>\s*</plist>\s*$#\t<key>CFBundleLocalizations</key>\n\t<array>\n\t\t<string>es</string>\n\t\t<string>en</string>\n\t</array>\n\t<key>NSPhotoLibraryAddUsageDescription</key>\n\t<string>HOPE guarda en Fotos las imágenes y vídeos que eliges guardar. / HOPE saves to Photos the images and videos you choose to save.</string>\n\t<key>ITSAppUsesNonExemptEncryption</key>\n\t<false/>\n</dict>\n</plist>\n#' ios/Runner/Info.plist
+  fi
 fi
 if [ -f web/manifest.json ]; then
   sed -i.bak -e 's/"name": "hope"/"name": "HOPE"/' -e 's/"short_name": "hope"/"short_name": "HOPE"/' web/manifest.json

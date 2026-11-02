@@ -156,8 +156,8 @@ class S {
   String get backup => _t({'es': 'Copia de seguridad', 'en': 'Backup'});
   String get backupExport => _t({'es': 'Exportar copia de seguridad', 'en': 'Export backup'});
   String get backupExportHelp => _t({
-        'es': 'Guarda en un archivo todos tus registros, tratamientos y ajustes.',
-        'en': 'Saves all your entries, treatments and settings to a file.'
+        'es': 'Guarda en un archivo todos tus registros, tratamientos, alimentación y ajustes.',
+        'en': 'Saves all your entries, treatments, food log and settings to a file.'
       });
   String get backupImport => _t({'es': 'Importar copia de seguridad', 'en': 'Import backup'});
   String get backupImportQuestion => _t({
@@ -174,9 +174,9 @@ class S {
       });
   String get deleteAll => _t({'es': 'Borrar todos los datos', 'en': 'Delete all data'});
   String get deleteAllQuestion => _t({
-        'es': 'Se borrarán todos los registros y tratamientos de este dispositivo. '
-            'No se puede deshacer.',
-        'en': 'All entries and treatments on this device will be deleted. '
+        'es': 'Se borrarán todos los registros, tratamientos y la alimentación de este '
+            'dispositivo. No se puede deshacer.',
+        'en': 'All entries, treatments and the food log on this device will be deleted. '
             'This cannot be undone.'
       });
   String get allDeleted => _t({'es': 'Se han borrado todos los datos', 'en': 'All data deleted'});
@@ -323,6 +323,126 @@ class S {
   String compareWindow(int n) => _t({
         'es': 'Media de los $n días anteriores y de los $n días posteriores al inicio.',
         'en': 'Average of the $n days before and the $n days after the start.',
+      });
+
+  // ----------------------------------------------------------- alimentación
+  String get food => _t({'es': 'Alimentación', 'en': 'Food'});
+  String get foodLogTab => _t({'es': 'Registrar', 'en': 'Log'});
+  String get foodHistoryTab => _t({'es': 'Historial', 'en': 'History'});
+  String get foodDay => _t({'es': 'Día', 'en': 'Day'});
+  String get today => _t({'es': 'Hoy', 'en': 'Today'});
+  String get yesterday => _t({'es': 'Ayer', 'en': 'Yesterday'});
+  String get otherDate => _t({'es': 'Elegir otra fecha…', 'en': 'Choose another date…'});
+  String get morning => _t({'es': 'Mañana', 'en': 'Morning'});
+  String get afternoon => _t({'es': 'Tarde', 'en': 'Afternoon'});
+  String get chooseFoods => _t({'es': 'Toca para elegir alimentos', 'en': 'Tap to choose foods'});
+  String get addFood => _t({'es': 'Añadir alimento…', 'en': 'Add food…'});
+  String get addFoodTitle => _t({'es': 'Añadir alimento', 'en': 'Add food'});
+  String get foodName => _t({'es': 'Nombre del alimento', 'en': 'Food name'});
+  String foodDuplicate(String name) => _t({
+        'es': 'Ese alimento ya existe: se ha marcado «$name».',
+        'en': 'That food already exists: “$name” has been selected.'
+      });
+  String foodAdded(String name) => _t({
+        'es': '«$name» se ha añadido a la lista.',
+        'en': '“$name” has been added to the list.'
+      });
+  String get foodNameTaken =>
+      _t({'es': 'Ya hay un alimento con ese nombre.', 'en': 'There is already a food with that name.'});
+  String get searchFood => _t({'es': 'Buscar alimento', 'en': 'Search food'});
+  String get removeFood => _t({'es': 'Quitar', 'en': 'Remove'});
+  String get done => _t({'es': 'Listo', 'en': 'Done'});
+  String get foodSaved => _t({'es': 'Guardado', 'en': 'Saved'});
+  String get foodUnsaved => _t({
+        'es': 'Tienes cambios sin guardar. ¿Descartarlos?',
+        'en': 'You have unsaved changes. Discard them?'
+      });
+  String get discard => _t({'es': 'Descartar', 'en': 'Discard'});
+  String get foodDayExists => _t({
+        'es': 'Este día ya tiene comidas guardadas: al guardar se actualizan.',
+        'en': 'This day already has saved meals: saving updates them.'
+      });
+  String get foodEmpty =>
+      _t({'es': 'Aún no has registrado comidas.', 'en': "You haven't logged any meals yet."});
+  String get foodLogNow => _t({'es': 'Registrar comidas', 'en': 'Log meals'});
+  String get filterByFood => _t({'es': 'Filtrar por alimento', 'en': 'Filter by food'});
+  String get noDaysWithFood =>
+      _t({'es': 'Ningún día con ese alimento.', 'en': 'No days with that food.'});
+  String foodCount(int n) => _t({
+        'es': n == 1 ? '1 alimento' : '$n alimentos',
+        'en': n == 1 ? '1 food' : '$n foods',
+      });
+  String get noFoods => _t({'es': 'Ningún alimento', 'en': 'No foods'});
+  String get deleteFoodDayQuestion =>
+      _t({'es': '¿Eliminar el registro de este día?', 'en': "Delete this day's log?"});
+  String get foodDayDeleted => _t({'es': 'Registro del día borrado', 'en': 'Day log deleted'});
+  String get seeFoodPain => _t({'es': 'Ver relación con el dolor', 'en': 'See food–pain link'});
+  String get foodPainTitle => _t({'es': 'Alimentación y dolor', 'en': 'Food and pain'});
+  String dayN(int n) => _t({'es': 'Día $n', 'en': 'Day $n'});
+  String get noPainLogged => _t({'es': 'Sin registro de dolor', 'en': 'No pain logged'});
+  String get notAvailableYet => _t({'es': 'Aún no disponible', 'en': 'Not available yet'});
+  String get painChartTitle =>
+      _t({'es': 'Dolor de fondo (0–10)', 'en': 'Background pain (0–10)'});
+  String get baselineLabel => _t({
+        'es': 'Tu media de los 7 días previos',
+        'en': 'Your average over the previous 7 days'
+      });
+  String baselineValue(String value) => _t({
+        'es': 'Tu media de los 7 días previos: $value',
+        'en': 'Your average over the previous 7 days: $value'
+      });
+  String get noBaseline => _t({
+        'es': 'Sin registros en los 7 días previos: no hay media para comparar.',
+        'en': 'No entries in the previous 7 days: no average to compare with.'
+      });
+  String painDayStats(String max, String mean, int n) => _t({
+        'es': 'Máx. $max · media $mean · ${nRecords(n)}',
+        'en': 'Max $max · average $mean · ${nRecords(n)}',
+      });
+  String vsBaseline(String delta) => _t({
+        'es': '$delta frente a tu media previa',
+        'en': '$delta vs your previous average'
+      });
+  String foodsThatDay(int n) => _t({
+        'es': 'Comidas de ese día (${foodCount(n)})',
+        'en': 'Meals that day (${foodCount(n)})'
+      });
+  String get foodPainDisclaimer => _t({
+        'es': 'Esta vista muestra coincidencias en el tiempo, no causas. Consulta cualquier '
+            'cambio en tu alimentación con un profesional sanitario.',
+        'en': 'This view shows patterns over time, not causes. Talk to a healthcare '
+            'professional before changing your diet.'
+      });
+  String get previousFoodDay =>
+      _t({'es': 'Día anterior con comidas', 'en': 'Previous day with meals'});
+  String get nextFoodDay => _t({'es': 'Día siguiente con comidas', 'en': 'Next day with meals'});
+  String chartDaySemantics(String day, String value) => _t({
+        'es': '$day: $value',
+        'en': '$day: $value',
+      });
+  String chartValueSemantics(String mean, String max, int n) => _t({
+        'es': 'media $mean, máximo $max, ${nRecords(n)}',
+        'en': 'average $mean, maximum $max, ${nRecords(n)}',
+      });
+  String get myFoods => _t({'es': 'Mis alimentos', 'en': 'My foods'});
+  String get myFoodsHelp => _t({
+        'es': 'Añade, cambia el nombre u oculta los alimentos de las listas.',
+        'en': 'Add, rename or hide the foods in the lists.'
+      });
+  String get foodsHelp => _t({
+        'es': 'Ocultar un alimento no borra tu historial: solo deja de aparecer en las listas. '
+            'Un alimento que ya has usado no se borra, se oculta.',
+        'en': 'Hiding a food keeps your history: it just no longer appears in the lists. '
+            'A food you have already used is hidden instead of deleted.'
+      });
+  String get customFoods => _t({'es': 'Añadidos por ti', 'en': 'Added by you'});
+  String get basicFoods => _t({'es': 'Alimentos básicos', 'en': 'Basic foods'});
+  String get renameFood => _t({'es': 'Cambiar nombre', 'en': 'Rename'});
+  String get deleteFoodQuestion => _t({'es': '¿Borrar este alimento?', 'en': 'Delete this food?'});
+  String get foodDeleted => _t({'es': 'Alimento borrado', 'en': 'Food deleted'});
+  String get foodArchived => _t({
+        'es': 'Ya lo has usado algún día: se ha ocultado para conservar tu historial.',
+        'en': 'You have already used it: it was hidden to keep your history.'
       });
 
   // -------------------------------------------------------------- gráficos

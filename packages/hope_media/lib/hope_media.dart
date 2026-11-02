@@ -6,7 +6,8 @@ import 'package:flutter/services.dart';
 const MethodChannel _channel = MethodChannel('hope_media');
 
 /// Codificación de vídeo MP4 (H.264) con el codificador que ya incluye el
-/// sistema: MediaCodec en Android y Media Foundation en Windows.
+/// sistema: MediaCodec en Android, AVFoundation en iOS y Media Foundation en
+/// Windows.
 class HopeMedia {
   const HopeMedia._();
 

@@ -1,5 +1,6 @@
-// Prueba del vídeo MP4 en un dispositivo de verdad (emulador de Android o
-// Windows), con el codificador y el decodificador del sistema.
+// Prueba del vídeo MP4 en un dispositivo de verdad (emulador de Android,
+// simulador de iPhone o Windows), con el codificador y el decodificador del
+// sistema.
 //
 // En la CI: bash tool/prueba_video.sh <dispositivo> [carpeta de muestras]
 
@@ -62,9 +63,11 @@ void main() {
     final supported = await HopeMedia.isMp4Supported();
     _report('$os: codificador H.264 ${supported ? 'disponible' : 'NO disponible'}');
     if (!supported) {
-      // Todos los Android lo tienen. En Windows puede faltar Media Foundation
-      // (ediciones «N», algunos servidores): la app ofrece entonces el GIF.
-      expect(Platform.isAndroid, isFalse, reason: 'Android incluye un codificador H.264');
+      // Todos los Android e iPhone lo tienen. En Windows puede faltar Media
+      // Foundation (ediciones «N», algunos servidores): la app ofrece entonces
+      // el GIF.
+      expect(Platform.isAndroid || Platform.isIOS, isFalse,
+          reason: 'Android e iOS incluyen un codificador H.264');
       return;
     }
 
