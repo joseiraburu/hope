@@ -133,7 +133,11 @@ jobs:
   ios:
     name: iOS (app sin firmar)
     needs: pruebas
-    runs-on: macos-latest
+    # Mac Intel: en noviembre de 2026 los Mac arm64 («macos-latest») de GitHub
+    # tenían colas tan largas que los trabajos se cancelaban sin empezar. GitHub
+    # mantiene «macos-15-intel» hasta otoño de 2027; cuando haya capacidad se
+    # puede volver a «macos-latest».
+    runs-on: macos-15-intel
     steps:
       - uses: actions/checkout@v5
       - uses: subosito/flutter-action@v2
@@ -171,7 +175,7 @@ jobs:
   video-ios:
     name: iOS (vídeo en el simulador)
     needs: pruebas
-    runs-on: macos-latest
+    runs-on: macos-15-intel
     timeout-minutes: 50
     steps:
       - uses: actions/checkout@v5
