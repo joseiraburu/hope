@@ -124,18 +124,23 @@ class _FoodPainScreenState extends State<FoodPainScreen> {
           if (v > 300) _go(older);
           if (v < -300) _go(newer);
         },
-        child: ListView(
+        // Pocas tarjetas: se construyen todas a la vez (no hace falta una
+        // lista perezosa) y el lector de pantalla las recorre enteras.
+        child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-          children: [
-            _FoodHeader(date: _date, foodDay: app.foodDayFor(_date)),
-            const SizedBox(height: 12),
-            _ChartCard(window: window),
-            const SizedBox(height: 12),
-            for (var i = 0; i < window.days.length; i++) ...[
-              _PainDayCard(index: i, window: window, onOpenRecord: _openRecord),
-              const SizedBox(height: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _FoodHeader(date: _date, foodDay: app.foodDayFor(_date)),
+              const SizedBox(height: 12),
+              _ChartCard(window: window),
+              const SizedBox(height: 12),
+              for (var i = 0; i < window.days.length; i++) ...[
+                _PainDayCard(index: i, window: window, onOpenRecord: _openRecord),
+                const SizedBox(height: 8),
+              ],
             ],
-          ],
+          ),
         ),
       ),
       bottomNavigationBar: Material(
@@ -320,12 +325,13 @@ class _LegendItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // El texto puede pasar a otra línea (pantallas estrechas o letra grande).
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         swatch,
         const SizedBox(width: 6),
-        Text(label, style: Theme.of(context).textTheme.bodySmall),
+        Flexible(child: Text(label, style: Theme.of(context).textTheme.bodySmall)),
       ],
     );
   }

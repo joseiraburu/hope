@@ -188,8 +188,7 @@ void main() {
   });
 
   testWidgets('relaciona las comidas con el dolor de los días 1 a 4', (tester) async {
-    // Pantalla alta para que las cuatro tarjetas estén construidas a la vez.
-    await setScreen(tester, const Size(412, 1500));
+    await setScreen(tester, const Size(412, 915));
     final now = DateTime.now();
     final d0 = DateTime(now.year, now.month, now.day - 10);
     DateTime at(int day, int hour) => DateTime(d0.year, d0.month, d0.day + day, hour);
