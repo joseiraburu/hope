@@ -80,6 +80,10 @@ PainRecord pain(DateTime at, int intensity, {String note = ''}) => PainRecord(
       note: note,
     );
 
+/// Campos desplegables de la mañana y de la tarde.
+final morningField = find.byKey(const ValueKey('food-slot-morning'));
+final afternoonField = find.byKey(const ValueKey('food-slot-afternoon'));
+
 /// Elige un alimento en la hoja abierta buscándolo por su nombre.
 Future<void> pickFood(WidgetTester tester, String query, String name) async {
   await tester.enterText(find.byType(TextField).last, query);
@@ -103,7 +107,7 @@ void main() {
     expect(find.textContaining('Hoy ·'), findsOneWidget);
 
     // Mañana: pan, café y un alimento nuevo.
-    await tester.tap(find.text('Mañana'));
+    await tester.tap(morningField);
     await settle(tester);
     await pickFood(tester, 'pan', 'Pan');
     await pickFood(tester, 'caf', 'Café');
@@ -133,7 +137,7 @@ void main() {
     expect(find.text('3 alimentos'), findsOneWidget);
 
     // Tarde: pasta.
-    await tester.tap(find.text('Tarde'));
+    await tester.tap(afternoonField);
     await settle(tester);
     await pickFood(tester, 'past', 'Pasta');
     await tester.tap(find.text('Listo'));
@@ -169,7 +173,7 @@ void main() {
     final controller = await controllerWith();
     await pumpScreen(tester, controller, const FoodScreen());
 
-    await tester.tap(find.text('Mañana'));
+    await tester.tap(morningField);
     await settle(tester);
     await pickFood(tester, 'arro', 'Arroz');
     await tester.tap(find.text('Listo'));
@@ -222,7 +226,9 @@ void main() {
     await settle(tester);
     expect(find.byType(RecordPlayerScreen), findsOneWidget);
     expect(find.text('Usar como punto de partida'), findsNothing);
-    await tester.pageBack();
+    // La flecha de volver de la barra superior (su texto de ayuda depende
+    // del idioma, por eso no se usa pageBack()).
+    await tester.tap(find.byType(BackButton));
     await settle(tester);
 
     // Día anterior con comidas.
@@ -242,7 +248,7 @@ void main() {
     expect(find.text('Morning'), findsOneWidget);
     expect(find.text('Afternoon'), findsOneWidget);
     expect(find.textContaining('Today ·'), findsOneWidget);
-    await tester.tap(find.text('Morning'));
+    await tester.tap(morningField);
     await settle(tester);
     await pickFood(tester, 'brea', 'Bread');
     await tester.tap(find.text('Done'));

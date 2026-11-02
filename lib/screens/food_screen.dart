@@ -311,6 +311,7 @@ class _SlotField extends StatelessWidget {
           label: '$name: ${ids.isEmpty ? s.noFoods : s.foodCount(ids.length)}',
           excludeSemantics: true,
           child: InkWell(
+            key: ValueKey('food-slot-${slot.name}'),
             borderRadius: BorderRadius.circular(4),
             onTap: () => showFoodPicker(context, draft, slot),
             child: InputDecorator(

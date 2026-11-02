@@ -340,7 +340,7 @@ void main() {
     await settle(tester);
     await capture(tester, '30_alimentacion_registrar');
 
-    await tester.tap(find.text('Mañana'));
+    await tester.tap(find.byKey(const ValueKey('food-slot-morning')));
     await settle(tester);
     await capture(tester, '31_alimentacion_hoja_manana');
     await tester.tap(find.text('Listo'));
