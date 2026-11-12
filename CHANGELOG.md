@@ -15,6 +15,8 @@
 - «Borrar todos los datos» borra también el sueño.
 - El texto de privacidad menciona el análisis opcional con IA.
 - Android: permisos de notificaciones, alarmas exactas, arranque e internet; receptores de avisos programados, icono de notificación y «desugaring» de Java (`tool/preparar_plataformas.sh`).
+- Compilación automática de Android con Java 21: Flutter 3.50 trae una versión de las herramientas de Android cuyo análisis «lint» no funciona con Java 17.
+- El informe completo se valida en la CI como PDF (`informe_completo.pdf` y `informe_completo_insuficiente.pdf`).
 
 ### Datos
 - `hope_alimentacion.json`: cada día guarda `comidas` (`desayuno`, `almuerzo`, `comida`, `merienda`, `cena`) con `alimentos`, `hora` y `no_realizada`. Los días de la 0.3 (`manana`, `tarde`) se leen como desayuno y comida.

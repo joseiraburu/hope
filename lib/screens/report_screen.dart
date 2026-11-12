@@ -131,96 +131,102 @@ class _ReportScreenState extends State<ReportScreen> {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-        children: [
-          SizedBox(
-            width: double.infinity,
-            child: SegmentedButton<int>(
-              segments: [
-                for (final d in reportPeriods) ButtonSegment<int>(value: d, label: Text(s.days(d))),
-              ],
-              selected: {_days},
-              showSelectedIcon: false,
-              onSelectionChanged: (v) => setState(() => _days = v.first),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '${s.lastNDays(report.periodDays)} · ${formatDayRange(report.from, report.to, app.language)}',
-            style: theme.textTheme.bodySmall,
-          ),
-          const SizedBox(height: 12),
-          if (report.allInsufficient) ...[
-            _InsufficientBanner(blocks: blocks),
-            const SizedBox(height: 12),
-          ],
-          for (final b in blocks) ...[
-            _BlockCard(block: b),
-            const SizedBox(height: 12),
-          ],
-          _TextCard(
-            title: s.reportConclusions,
-            icon: Icons.summarize_outlined,
-            children: [for (final c in conclusions) _Bullet(c)],
-          ),
-          const SizedBox(height: 12),
-          _TextCard(
-            title: s.aiResultTitle,
-            icon: Icons.smart_toy_outlined,
+      // En pantallas anchas el texto no ocupa todo el ancho, para leerlo mejor.
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 960),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
             children: [
-              if (!app.settings.aiEnabled) ...[
-                Text(s.aiOffInReport, style: theme.textTheme.bodyMedium),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton(onPressed: _openAiSettings, child: Text(s.aiOptional)),
-                ),
-              ] else if (_aiBusy)
-                Row(
-                  children: [
-                    const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
-                    const SizedBox(width: 12),
-                    Expanded(child: Text(s.aiWorking)),
+              SizedBox(
+                width: double.infinity,
+                child: SegmentedButton<int>(
+                  segments: [
+                    for (final d in reportPeriods) ButtonSegment<int>(value: d, label: Text(s.days(d))),
                   ],
-                )
-              else ...[
-                if (aiText != null) ...[
-                  SelectableText(aiText, style: theme.textTheme.bodyMedium),
-                  const SizedBox(height: 8),
-                  Text(s.aiResultNotice, style: theme.textTheme.bodySmall),
-                ],
-                if (_aiError != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(_aiError!, style: TextStyle(color: theme.colorScheme.error)),
-                  ),
-                if (aiText == null)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: FilledButton.tonalIcon(
-                      onPressed: _askAi,
-                      icon: const Icon(Icons.auto_awesome_outlined),
-                      label: Text(s.aiAsk),
-                    ),
-                  ),
+                  selected: {_days},
+                  showSelectedIcon: false,
+                  onSelectionChanged: (v) => setState(() => _days = v.first),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${s.lastNDays(report.periodDays)} · ${formatDayRange(report.from, report.to, app.language)}',
+                style: theme.textTheme.bodySmall,
+              ),
+              const SizedBox(height: 12),
+              if (report.allInsufficient) ...[
+                _InsufficientBanner(blocks: blocks),
+                const SizedBox(height: 12),
               ],
+              for (final b in blocks) ...[
+                _BlockCard(block: b),
+                const SizedBox(height: 12),
+              ],
+              _TextCard(
+                title: s.reportConclusions,
+                icon: Icons.summarize_outlined,
+                children: [for (final c in conclusions) _Bullet(c)],
+              ),
+              const SizedBox(height: 12),
+              _TextCard(
+                title: s.aiResultTitle,
+                icon: Icons.smart_toy_outlined,
+                children: [
+                  if (!app.settings.aiEnabled) ...[
+                    Text(s.aiOffInReport, style: theme.textTheme.bodyMedium),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton(onPressed: _openAiSettings, child: Text(s.aiOptional)),
+                    ),
+                  ] else if (_aiBusy)
+                    Row(
+                      children: [
+                        const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                        const SizedBox(width: 12),
+                        Expanded(child: Text(s.aiWorking)),
+                      ],
+                    )
+                  else ...[
+                    if (aiText != null) ...[
+                      SelectableText(aiText, style: theme.textTheme.bodyMedium),
+                      const SizedBox(height: 8),
+                      Text(s.aiResultNotice, style: theme.textTheme.bodySmall),
+                    ],
+                    if (_aiError != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Text(_aiError!, style: TextStyle(color: theme.colorScheme.error)),
+                      ),
+                    if (aiText == null)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: FilledButton.tonalIcon(
+                          onPressed: _askAi,
+                          icon: const Icon(Icons.auto_awesome_outlined),
+                          label: Text(s.aiAsk),
+                        ),
+                      ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 20),
+              Text(
+                s.reportNotice,
+                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 6),
+              Text(s.medicalDisclaimer, style: theme.textTheme.bodySmall),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: _exportPdf,
+                icon: const Icon(Icons.picture_as_pdf_outlined),
+                label: Text(s.reportExportPdf),
+                style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+              ),
             ],
           ),
-          const SizedBox(height: 20),
-          Text(
-            s.reportNotice,
-            style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 6),
-          Text(s.medicalDisclaimer, style: theme.textTheme.bodySmall),
-          const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: _exportPdf,
-            icon: const Icon(Icons.picture_as_pdf_outlined),
-            label: Text(s.reportExportPdf),
-            style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
-          ),
-        ],
+        ),
       ),
     );
   }

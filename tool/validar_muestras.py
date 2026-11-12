@@ -91,7 +91,7 @@ def comprobar_xlsx(d, nombre):
                  f"{[c.value for c in reg[2]][:4]}")
 
 
-def comprobar_pdf(d, nombre):
+def comprobar_pdf(d, nombre, contiene=()):
     p = os.path.join(d, nombre)
     if not os.path.exists(p):
         errores.append(f"falta {nombre}")
@@ -106,6 +106,10 @@ def comprobar_pdf(d, nombre):
     notas.append(f"{nombre}: {len(r.pages)} páginas, {mb(p):.2f} MB")
     if "HOPE" not in texto:
         errores.append(f"{nombre}: no contiene el título")
+    plano = " ".join(texto.split())
+    for frase in contiene:
+        if frase not in plano:
+            errores.append(f"{nombre}: no contiene «{frase}»")
 
 
 def leer_mp4(p):
@@ -231,6 +235,11 @@ def main():
         comprobar_gif(d, "registro.gif", 150, 10, 8, True)
         comprobar_xlsx(d, "informe.xlsx")
         comprobar_pdf(d, "informe.pdf")
+        comprobar_pdf(d, "informe_completo.pdf",
+                      ("Informe completo", "Relación con el dolor", "Alcohol",
+                       "no sustituye la valoración de un profesional sanitario"))
+        comprobar_pdf(d, "informe_completo_insuficiente.pdf",
+                      ("Informe completo", "Datos insuficientes"))
     if notas:
         print("::notice title=Muestras::" + escapar("\n".join(notas)))
     if errores:

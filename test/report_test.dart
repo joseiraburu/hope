@@ -4,6 +4,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hope/charts/full_report.dart';
 import 'package:hope/charts/full_report_text.dart';
+import 'package:hope/export/report_pdf.dart';
 import 'package:hope/l10n/strings.dart';
 import 'package:hope/models/food.dart';
 import 'package:hope/models/pain_record.dart';
@@ -72,6 +73,20 @@ void main() {
       expect(blocks[1].missing.single, contains('(hay 3)'));
       expect(blocks[2].missing.single, contains('5 noches'));
       expect(w.aiSummary(), contains('Datos insuficientes'));
+    });
+
+    test('el PDF también se genera con datos insuficientes', () async {
+      final w = writer(report);
+      final bytes = await fullReportPdf(
+        report: report,
+        blocks: w.blocks(),
+        conclusions: w.conclusions(),
+        s: es,
+        lang: 'es',
+        now: now,
+      );
+      expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
+      saveSample('informe_completo_insuficiente.pdf', bytes);
     });
 
     test('el periodo son los últimos días hasta hoy, incluido', () {
@@ -206,6 +221,21 @@ void main() {
       final relations = blocks.last.lines.join('\n');
       expect(relations, contains('Coincide con más dolor: Alcohol'));
       expect(relations, contains('Coincide con menos dolor: Pescado'));
+    });
+
+    test('el informe en PDF se genera (muestra para la CI)', () async {
+      final w = writer(report);
+      final bytes = await fullReportPdf(
+        report: report,
+        blocks: w.blocks(),
+        conclusions: w.conclusions(),
+        s: es,
+        lang: 'es',
+        aiText: 'Texto de prueba del análisis con IA: «comillas», tildes y −1,5.',
+        now: DateTime(2026, 11, 14, 20),
+      );
+      expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
+      saveSample('informe_completo.pdf', bytes);
     });
 
     test('el resumen para la IA no lleva fechas ni notas', () {

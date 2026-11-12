@@ -59,7 +59,7 @@ Las estadísticas son solo descriptivas: HOPE no indica dosis ni valora si un tr
 ### Requisitos
 
 - [Flutter](https://docs.flutter.dev/get-started/install) (canal estable).
-- Android: Android Studio o el SDK de Android y Java 17.
+- Android: Android Studio o el SDK de Android y Java 21 (desde Flutter 3.50; con Java 17 falla el análisis «lint» de la compilación de versión).
 - Windows: Visual Studio 2022 con «Desarrollo para el escritorio con C++».
 - iOS: un Mac con Xcode.
 
