@@ -211,10 +211,7 @@ class _ReminderCard extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.only(left: 12),
-              child: Wrap(
-                spacing: 12,
-                runSpacing: 8,
-                crossAxisAlignment: WrapCrossAlignment.center,
+              child: Row(
                 children: [
                   OutlinedButton.icon(
                     key: ValueKey('reminder-time-$index'),
@@ -222,32 +219,38 @@ class _ReminderCard extends StatelessWidget {
                     icon: const Icon(Icons.schedule),
                     label: Text(reminder.timeText, style: theme.textTheme.titleMedium),
                   ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('${s.reminderOpens}:', style: theme.textTheme.bodyMedium),
-                      const SizedBox(width: 8),
-                      DropdownButton<MealSlot>(
-                        value: reminder.slot,
-                        onChanged: (v) {
-                          if (v != null) onChanged(reminder.copyWith(slot: v));
-                        },
-                        items: [
-                          for (final slot in MealSlot.values)
-                            DropdownMenuItem<MealSlot>(
-                              value: slot,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(mealSlotIcon(slot), size: 18),
-                                  const SizedBox(width: 6),
-                                  Text(s.meal(slot)),
-                                ],
-                              ),
-                            ),
-                        ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: s.reminderOpens,
+                        border: const OutlineInputBorder(),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                       ),
-                    ],
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<MealSlot>(
+                          value: reminder.slot,
+                          isExpanded: true,
+                          onChanged: (v) {
+                            if (v != null) onChanged(reminder.copyWith(slot: v));
+                          },
+                          items: [
+                            for (final slot in MealSlot.values)
+                              DropdownMenuItem<MealSlot>(
+                                value: slot,
+                                child: Row(
+                                  children: [
+                                    Icon(mealSlotIcon(slot), size: 18),
+                                    const SizedBox(width: 6),
+                                    Flexible(child: Text(s.meal(slot), overflow: TextOverflow.ellipsis)),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),

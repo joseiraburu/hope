@@ -276,80 +276,85 @@ class _FoodLogTab extends StatelessWidget {
     if (!days.any((d) => dayKey(d) == current)) days.add(draft.day);
     final saved = app.foodDayFor(draft.day);
 
-    return ListView(
+    // Se construyen todas las tomas (no una lista perezosa) para poder llevar
+    // a la vista la de un recordatorio.
+    return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
-      children: [
-        if (draft.isToday) ...[
-          CompleteHopeCard(
-            draft: draft,
-            reminderSlot: highlight,
-            onRatePain: onRatePain,
-            onLogSleep: onLogSleep,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          InputDecorator(
+            decoration: InputDecoration(
+              labelText: s.foodDay,
+              prefixIcon: const Icon(Icons.event),
+              border: const OutlineInputBorder(),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: current,
+                isExpanded: true,
+                items: [
+                  for (final d in days)
+                    DropdownMenuItem<String>(
+                      value: dayKey(d),
+                      child: Text(foodDayLabel(app, d), overflow: TextOverflow.ellipsis),
+                    ),
+                  DropdownMenuItem<String>(
+                    value: _otherDate,
+                    child: Text(s.otherDate, style: TextStyle(color: theme.colorScheme.primary)),
+                  ),
+                ],
+                onChanged: (v) {
+                  if (v == null) return;
+                  if (v == _otherDate) {
+                    _pickOtherDate(context);
+                  } else {
+                    onChangeDay(parseDayKey(v));
+                  }
+                },
+              ),
+            ),
           ),
           const SizedBox(height: 20),
-        ],
-        InputDecorator(
-          decoration: InputDecoration(
-            labelText: s.foodDay,
-            prefixIcon: const Icon(Icons.event),
-            border: const OutlineInputBorder(),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: current,
-              isExpanded: true,
-              items: [
-                for (final d in days)
-                  DropdownMenuItem<String>(
-                    value: dayKey(d),
-                    child: Text(foodDayLabel(app, d), overflow: TextOverflow.ellipsis),
-                  ),
-                DropdownMenuItem<String>(
-                  value: _otherDate,
-                  child: Text(s.otherDate, style: TextStyle(color: theme.colorScheme.primary)),
-                ),
-              ],
-              onChanged: (v) {
-                if (v == null) return;
-                if (v == _otherDate) {
-                  _pickOtherDate(context);
-                } else {
-                  onChangeDay(parseDayKey(v));
-                }
-              },
+          if (draft.isToday) ...[
+            CompleteHopeCard(
+              draft: draft,
+              reminderSlot: highlight,
+              onRatePain: onRatePain,
+              onLogSleep: onLogSleep,
             ),
-          ),
-        ),
-        const SizedBox(height: 20),
-        for (final slot in MealSlot.values) ...[
-          _SlotField(
-            key: slotKeys[slot],
-            draft: draft,
-            slot: slot,
-            highlighted: slot == highlight && draft.isToday,
-          ),
-          const SizedBox(height: 16),
-        ],
-        const SizedBox(height: 4),
-        if (saved != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Row(
-              children: [
-                Icon(Icons.info_outline, size: 18, color: theme.colorScheme.outline),
-                const SizedBox(width: 8),
-                Expanded(child: Text(s.foodDayExists, style: theme.textTheme.bodySmall)),
-              ],
+            const SizedBox(height: 20),
+          ],
+          for (final slot in MealSlot.values) ...[
+            _SlotField(
+              key: slotKeys[slot],
+              draft: draft,
+              slot: slot,
+              highlighted: slot == highlight && draft.isToday,
             ),
+            const SizedBox(height: 16),
+          ],
+          const SizedBox(height: 4),
+          if (saved != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, size: 18, color: theme.colorScheme.outline),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(s.foodDayExists, style: theme.textTheme.bodySmall)),
+                ],
+              ),
+            ),
+          FilledButton.icon(
+            onPressed: draft.isEmpty ? null : onSave,
+            icon: const Icon(Icons.check),
+            label: Text(s.save),
+            style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
           ),
-        FilledButton.icon(
-          onPressed: draft.isEmpty ? null : onSave,
-          icon: const Icon(Icons.check),
-          label: Text(s.save),
-          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

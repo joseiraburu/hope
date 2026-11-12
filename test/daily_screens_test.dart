@@ -144,7 +144,7 @@ void main() {
     await settle(tester);
     // La toma del recordatorio queda a la vista.
     expect(find.byKey(const ValueKey('food-slot-cena')), findsOneWidget);
-    final list = find.descendant(of: find.byType(ListView), matching: find.byType(Scrollable)).first;
+    final list = find.descendant(of: find.byType(SingleChildScrollView), matching: find.byType(Scrollable)).first;
     await tester.scrollUntilVisible(find.textContaining('Recordatorio: Cena'), -300, scrollable: list);
     expect(find.textContaining('Recordatorio: Cena'), findsOneWidget);
     expect(find.text('Evaluar el dolor'), findsOneWidget);
@@ -161,6 +161,8 @@ void main() {
     await settle(tester);
     expect(c.settings.reminders[0].enabled, isTrue);
     expect(c.settings.anyReminderEnabled, isTrue);
+    await tester.scrollUntilVisible(find.text('Añadir al calendario (.ics)'), 300,
+        scrollable: find.byType(Scrollable).first);
     expect(find.text('Añadir al calendario (.ics)'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

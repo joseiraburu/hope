@@ -157,6 +157,8 @@ void main() {
     await tester.tap(find.text('Listo'));
     await settle(tester);
 
+    await tester.ensureVisible(find.text('Guardar'));
+    await tester.pump();
     await tester.tap(find.text('Guardar'));
     await settle(tester);
     final saved = controller.foodDayFor(DateTime.now())!;
@@ -195,6 +197,8 @@ void main() {
     await tester.tap(find.text('Listo'));
     await settle(tester);
 
+    await tester.ensureVisible(find.byType(DropdownButton<String>));
+    await tester.pump();
     await tester.tap(find.byType(DropdownButton<String>));
     await settle(tester);
     await tester.tap(find.textContaining('Ayer ·').last);
