@@ -48,6 +48,8 @@ fi
 #   - Icono de la notificación (el óvalo de HOPE en blanco) y regla para que
 #     la compilación de versión no lo elimine.
 #   - «Desugaring» de Java, que el complemento necesita.
+# Los patrones admiten finales de línea de Windows (CRLF): en Windows,
+# flutter create escribe los archivos así.
 manifest=android/app/src/main/AndroidManifest.xml
 if [ -f "$manifest" ] && ! grep -q 'RECEIVE_BOOT_COMPLETED' "$manifest"; then
   perl -0pi -e 's#(\s*<application)#\n    <uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>$1#' "$manifest"
@@ -93,12 +95,12 @@ fi
 gradle_kts=android/app/build.gradle.kts
 gradle_groovy=android/app/build.gradle
 if [ -f "$gradle_kts" ] && ! grep -q 'desugar_jdk_libs' "$gradle_kts"; then
-  perl -0pi -e 's#(\nandroid \{\n)#$1    compileOptions {\n        isCoreLibraryDesugaringEnabled = true\n    }\n#' "$gradle_kts"
+  perl -0pi -e 's#^(android \{\r?\n)#$1    compileOptions {\n        isCoreLibraryDesugaringEnabled = true\n    }\n#m' "$gradle_kts"
   perl -pi -e 's#minSdk = flutter\.minSdkVersion#minSdk = maxOf(flutter.minSdkVersion, 24)#' "$gradle_kts"
   printf '\ndependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")\n}\n' >> "$gradle_kts"
   grep -q 'isCoreLibraryDesugaringEnabled = true' "$gradle_kts"
 elif [ -f "$gradle_groovy" ] && ! grep -q 'desugar_jdk_libs' "$gradle_groovy"; then
-  perl -0pi -e 's#(\nandroid \{\n)#$1    compileOptions {\n        coreLibraryDesugaringEnabled true\n    }\n#' "$gradle_groovy"
+  perl -0pi -e 's#^(android \{\r?\n)#$1    compileOptions {\n        coreLibraryDesugaringEnabled true\n    }\n#m' "$gradle_groovy"
   perl -pi -e 's#minSdkVersion flutter\.minSdkVersion#minSdkVersion Math.max(flutter.minSdkVersion, 24)#' "$gradle_groovy"
   printf "\ndependencies {\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'\n}\n" >> "$gradle_groovy"
   grep -q 'coreLibraryDesugaringEnabled true' "$gradle_groovy"
