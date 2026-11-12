@@ -3,9 +3,32 @@
 
 import 'pain_record.dart' show isoWithOffset;
 
-/// Momento del día de una comida. Se pueden añadir más en el futuro (por
-/// ejemplo, la noche) sin cambiar los datos guardados.
-enum MealSlot { morning, afternoon }
+/// Las cinco tomas del día, en orden. [key] es la clave que se guarda en los
+/// datos (no cambia con el idioma) y [defaultHour]:[defaultMinute] es la hora
+/// habitual, que se usa para los recordatorios y para los días pasados.
+enum MealSlot {
+  breakfast('desayuno', 8, 0),
+  midMorning('almuerzo', 11, 0),
+  lunch('comida', 14, 0),
+  snack('merienda', 17, 30),
+  dinner('cena', 21, 0);
+
+  const MealSlot(this.key, this.defaultHour, this.defaultMinute);
+
+  final String key;
+  final int defaultHour;
+  final int defaultMinute;
+
+  /// Hora habitual como texto: «08:00».
+  String get defaultTime => '${_two(defaultHour)}:${_two(defaultMinute)}';
+
+  static MealSlot? fromKey(String? key) {
+    for (final s in values) {
+      if (s.key == key) return s;
+    }
+    return null;
+  }
+}
 
 /// Un alimento de la lista del usuario.
 ///
@@ -48,20 +71,71 @@ class FoodDef {
       );
 }
 
-/// Lo que se comió un día: un registro por día, con los alimentos de la
-/// mañana y de la tarde (identificadores de [FoodDef]).
+/// Lo registrado en una toma: los alimentos, si no se hizo («No realizada»)
+/// y a qué hora.
+class MealLog {
+  const MealLog({this.foods = const [], this.skipped = false, this.time});
+
+  /// Identificadores de [FoodDef].
+  final List<String> foods;
+
+  /// La toma no se hizo ese día.
+  final bool skipped;
+
+  /// Hora de la toma, «HH:mm» (puede faltar).
+  final String? time;
+
+  /// Ni alimentos ni «No realizada»: no hay nada que guardar.
+  bool get isEmpty => foods.isEmpty && !skipped;
+
+  MealLog copyWith({List<String>? foods, bool? skipped, String? time, bool clearTime = false}) =>
+      MealLog(
+        foods: foods ?? this.foods,
+        skipped: skipped ?? this.skipped,
+        time: clearTime ? null : (time ?? this.time),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'alimentos': foods,
+        if (skipped) 'no_realizada': true,
+        if (time != null) 'hora': time,
+      };
+
+  factory MealLog.fromJson(Map<String, dynamic> j) {
+    final skipped = (j['no_realizada'] as bool?) ?? false;
+    return MealLog(
+      foods: skipped
+          ? const []
+          : [for (final f in (j['alimentos'] as List<dynamic>? ?? const [])) f as String],
+      skipped: skipped,
+      time: normalizeMealTime(j['hora'] as String?),
+    );
+  }
+}
+
+/// Lo que se comió un día: un registro por día con sus cinco tomas.
 class FoodDay {
   FoodDay({
     required DateTime date,
-    this.morning = const [],
-    this.afternoon = const [],
+    Map<MealSlot, MealLog> meals = const {},
     this.updatedAt,
-  }) : date = dayOf(date);
+  })  : date = dayOf(date),
+        meals = Map<MealSlot, MealLog>.unmodifiable(<MealSlot, MealLog>{
+          for (final e in meals.entries)
+            if (!e.value.isEmpty) e.key: e.value,
+        });
+
+  /// Atajo: un día con los alimentos de algunas tomas.
+  factory FoodDay.withFoods(DateTime date, Map<MealSlot, List<String>> foods) => FoodDay(
+        date: date,
+        meals: {for (final e in foods.entries) e.key: MealLog(foods: e.value)},
+      );
 
   /// Día del registro (medianoche local).
   final DateTime date;
-  final List<String> morning;
-  final List<String> afternoon;
+
+  /// Tomas con algo registrado (las vacías no se guardan).
+  final Map<MealSlot, MealLog> meals;
 
   /// Última vez que se guardó.
   final DateTime? updatedAt;
@@ -69,44 +143,86 @@ class FoodDay {
   /// Clave del día: «2026-11-02».
   String get key => dayKey(date);
 
-  List<String> slot(MealSlot s) => s == MealSlot.morning ? morning : afternoon;
+  MealLog meal(MealSlot s) => meals[s] ?? const MealLog();
 
-  /// Alimentos distintos del día (uno que se tomó mañana y tarde cuenta una vez).
-  Set<String> get foods => {...morning, ...afternoon};
+  /// Alimentos de una toma.
+  List<String> slot(MealSlot s) => meal(s).foods;
 
-  bool get isEmpty => morning.isEmpty && afternoon.isEmpty;
+  bool isSkipped(MealSlot s) => meal(s).skipped;
 
-  bool contains(String foodId) => morning.contains(foodId) || afternoon.contains(foodId);
+  /// Alimentos distintos del día (uno que se tomó en dos tomas cuenta una vez).
+  Set<String> get foods => {for (final m in meals.values) ...m.foods};
 
-  FoodDay copyWith({
-    List<String>? morning,
-    List<String>? afternoon,
-    DateTime? updatedAt,
-  }) =>
-      FoodDay(
+  bool get isEmpty => meals.isEmpty;
+
+  bool contains(String foodId) => meals.values.any((m) => m.foods.contains(foodId));
+
+  /// Tomas con alimentos, en orden.
+  List<MealSlot> get eatenSlots =>
+      [for (final s in MealSlot.values) if (meal(s).foods.isNotEmpty) s];
+
+  /// Tomas marcadas como «No realizada», en orden.
+  List<MealSlot> get skippedSlots => [for (final s in MealSlot.values) if (meal(s).skipped) s];
+
+  FoodDay copyWith({Map<MealSlot, MealLog>? meals, DateTime? updatedAt}) => FoodDay(
         date: date,
-        morning: morning ?? this.morning,
-        afternoon: afternoon ?? this.afternoon,
+        meals: meals ?? this.meals,
         updatedAt: updatedAt ?? this.updatedAt,
       );
 
   Map<String, dynamic> toJson() => {
         'fecha': key,
-        'manana': morning,
-        'tarde': afternoon,
+        'comidas': {
+          for (final s in MealSlot.values)
+            if (meals[s] != null) s.key: meals[s]!.toJson(),
+        },
         if (updatedAt != null) 'actualizado': isoWithOffset(updatedAt!),
       };
 
+  /// Lee un día. Los días de la primera versión de Alimentación (dos
+  /// franjas, «manana» y «tarde») pasan al desayuno y a la comida.
   factory FoodDay.fromJson(Map<String, dynamic> j) {
     final updated = j['actualizado'] as String?;
+    final meals = <MealSlot, MealLog>{};
+    final raw = j['comidas'];
+    if (raw is Map<String, dynamic>) {
+      for (final e in raw.entries) {
+        final slot = MealSlot.fromKey(e.key);
+        final value = e.value;
+        if (slot != null && value is Map<String, dynamic>) meals[slot] = MealLog.fromJson(value);
+      }
+    }
+    List<String> legacy(String key) =>
+        [for (final f in (j[key] as List<dynamic>? ?? const [])) f as String];
+    final morning = legacy('manana');
+    final afternoon = legacy('tarde');
+    if (morning.isNotEmpty && meals[MealSlot.breakfast] == null) {
+      meals[MealSlot.breakfast] = MealLog(foods: morning);
+    }
+    if (afternoon.isNotEmpty && meals[MealSlot.lunch] == null) {
+      meals[MealSlot.lunch] = MealLog(foods: afternoon);
+    }
     return FoodDay(
       date: parseDayKey(j['fecha'] as String),
-      morning: [for (final f in (j['manana'] as List<dynamic>? ?? const [])) f as String],
-      afternoon: [for (final f in (j['tarde'] as List<dynamic>? ?? const [])) f as String],
+      meals: meals,
       updatedAt: updated == null ? null : DateTime.tryParse(updated)?.toLocal(),
     );
   }
 }
+
+/// Hora «H:m» normalizada a «HH:mm». Null si no es una hora válida.
+String? normalizeMealTime(String? text) {
+  if (text == null) return null;
+  final m = RegExp(r'^\s*(\d{1,2}):(\d{1,2})\s*$').firstMatch(text);
+  if (m == null) return null;
+  final h = int.parse(m.group(1)!);
+  final min = int.parse(m.group(2)!);
+  if (h > 23 || min > 59) return null;
+  return '${_two(h)}:${_two(min)}';
+}
+
+/// Hora de un [DateTime] como «HH:mm».
+String timeOfDayText(DateTime dt) => '${_two(dt.hour)}:${_two(dt.minute)}';
 
 String _two(int n) => n.toString().padLeft(2, '0');
 

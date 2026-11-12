@@ -8,8 +8,12 @@ import '../export/backup_flow.dart';
 import '../state/app_controller.dart';
 import '../widgets/dialogs.dart';
 import '../widgets/logo.dart';
+import 'ai_settings_screen.dart';
 import 'food_screen.dart';
 import 'foods_screen.dart';
+import 'reminders_screen.dart';
+import 'report_screen.dart';
+import 'sleep_screen.dart';
 
 /// Ajustes: perfil, apariencia, movimiento, datos y «Acerca de».
 class SettingsScreen extends StatelessWidget {
@@ -117,6 +121,37 @@ class SettingsScreen extends StatelessWidget {
             subtitle: Text(s.myFoodsHelp),
             onTap: () => Navigator.of(context)
                 .push(MaterialPageRoute<void>(builder: (_) => const FoodsScreen())),
+          ),
+          section(s.sleep),
+          ListTile(
+            leading: const Icon(Icons.bedtime_outlined),
+            title: Text(s.sleep),
+            subtitle: Text(s.sleepHelp),
+            onTap: () => Navigator.of(context)
+                .push(MaterialPageRoute<void>(builder: (_) => const SleepScreen())),
+          ),
+          section(s.reminders),
+          ListTile(
+            leading: const Icon(Icons.notifications_active_outlined),
+            title: Text(s.reminders),
+            subtitle: Text(s.remindersActive(settings.reminders.where((r) => r.enabled).length)),
+            onTap: () => Navigator.of(context)
+                .push(MaterialPageRoute<void>(builder: (_) => const RemindersScreen())),
+          ),
+          section(s.fullReport),
+          ListTile(
+            leading: const Icon(Icons.summarize_outlined),
+            title: Text(s.fullReport),
+            subtitle: Text(s.fullReportHelp),
+            onTap: () => Navigator.of(context)
+                .push(MaterialPageRoute<void>(builder: (_) => const ReportScreen())),
+          ),
+          ListTile(
+            leading: const Icon(Icons.smart_toy_outlined),
+            title: Text(s.aiOptional),
+            subtitle: Text(settings.aiEnabled ? s.aiOn : s.aiOff),
+            onTap: () => Navigator.of(context)
+                .push(MaterialPageRoute<void>(builder: (_) => const AiSettingsScreen())),
           ),
           section(s.data),
           Padding(

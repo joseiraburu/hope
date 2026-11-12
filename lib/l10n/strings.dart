@@ -5,6 +5,8 @@
 // Para añadir un idioma, añade su código a [S.supported] y una entrada con
 // ese código en cada texto. Los textos que falten se muestran en español.
 
+import '../models/food.dart' show MealSlot;
+
 /// Textos de la interfaz.
 class S {
   const S(this.lang);
@@ -156,8 +158,8 @@ class S {
   String get backup => _t({'es': 'Copia de seguridad', 'en': 'Backup'});
   String get backupExport => _t({'es': 'Exportar copia de seguridad', 'en': 'Export backup'});
   String get backupExportHelp => _t({
-        'es': 'Guarda en un archivo todos tus registros, tratamientos, alimentación y ajustes.',
-        'en': 'Saves all your entries, treatments, food log and settings to a file.'
+        'es': 'Guarda en un archivo todos tus registros, tratamientos, alimentación, sueño y ajustes.',
+        'en': 'Saves all your entries, treatments, food log, sleep and settings to a file.'
       });
   String get backupImport => _t({'es': 'Importar copia de seguridad', 'en': 'Import backup'});
   String get backupImportQuestion => _t({
@@ -174,17 +176,19 @@ class S {
       });
   String get deleteAll => _t({'es': 'Borrar todos los datos', 'en': 'Delete all data'});
   String get deleteAllQuestion => _t({
-        'es': 'Se borrarán todos los registros, tratamientos y la alimentación de este '
-            'dispositivo. No se puede deshacer.',
-        'en': 'All entries, treatments and the food log on this device will be deleted. '
-            'This cannot be undone.'
+        'es': 'Se borrarán todos los registros, tratamientos, la alimentación y el sueño de '
+            'este dispositivo. No se puede deshacer.',
+        'en': 'All entries, treatments, the food log and sleep on this device will be '
+            'deleted. This cannot be undone.'
       });
   String get allDeleted => _t({'es': 'Se han borrado todos los datos', 'en': 'All data deleted'});
   String get dataLocal => _t({
         'es': 'Tus registros se guardan solo en este dispositivo. HOPE no usa '
-            'servidores, cuentas, publicidad ni analítica.',
+            'servidores, cuentas, publicidad ni analítica. Solo si activas el análisis '
+            'con IA del informe se envía un resumen anónimo al servicio que elijas.',
         'en': 'Your entries are stored only on this device. HOPE uses no '
-            'servers, accounts, ads or analytics.'
+            'servers, accounts, ads or analytics. Only if you turn on the AI analysis '
+            'of the report is an anonymous summary sent to the service you choose.'
       });
   String get version => _t({'es': 'Versión', 'en': 'Version'});
   String get license =>
@@ -333,8 +337,45 @@ class S {
   String get today => _t({'es': 'Hoy', 'en': 'Today'});
   String get yesterday => _t({'es': 'Ayer', 'en': 'Yesterday'});
   String get otherDate => _t({'es': 'Elegir otra fecha…', 'en': 'Choose another date…'});
-  String get morning => _t({'es': 'Mañana', 'en': 'Morning'});
-  String get afternoon => _t({'es': 'Tarde', 'en': 'Afternoon'});
+  /// Nombre de cada toma.
+  String meal(MealSlot slot) => switch (slot) {
+        MealSlot.breakfast => _t({'es': 'Desayuno', 'en': 'Breakfast'}),
+        MealSlot.midMorning => _t({'es': 'Almuerzo', 'en': 'Mid-morning snack'}),
+        MealSlot.lunch => _t({'es': 'Comida', 'en': 'Lunch'}),
+        MealSlot.snack => _t({'es': 'Merienda', 'en': 'Afternoon snack'}),
+        MealSlot.dinner => _t({'es': 'Cena', 'en': 'Dinner'}),
+      };
+  String get mealSkipped => _t({'es': 'No realizada', 'en': 'Skipped'});
+  String get mealTime => _t({'es': 'Hora', 'en': 'Time'});
+  String get noMealTime => _t({'es': 'Sin hora', 'en': 'No time'});
+  String mealTimeTooltip(String meal) =>
+      _t({'es': 'Cambiar la hora · $meal', 'en': 'Change time · $meal'});
+  String mealSkippedLine(String meal) =>
+      _t({'es': '$meal: no realizada', 'en': '$meal: skipped'});
+  String mealLine(String meal, String? time, String foods) => time == null
+      ? '$meal: $foods'
+      : _t({'es': '$meal ($time): $foods', 'en': '$meal ($time): $foods'});
+  String mealsDone(int done, int skipped) => _t({
+        'es': '$done de 5 tomas registradas${skipped > 0 ? ' · $skipped no realizadas' : ''}',
+        'en': '$done of 5 meals logged${skipped > 0 ? ' · $skipped skipped' : ''}',
+      });
+  String get completeHope => _t({'es': 'Completa HOPE', 'en': 'Complete HOPE'});
+  String get completeHopeHelp => _t({
+        'es': 'Lo que llevas registrado hoy:',
+        'en': 'What you have logged today:',
+      });
+  String get checkPain => _t({'es': 'Dolor', 'en': 'Pain'});
+  String painLoggedAt(String time) =>
+      _t({'es': 'Evaluado hoy a las $time', 'en': 'Rated today at $time'});
+  String get painNotLoggedToday =>
+      _t({'es': 'Aún no lo has evaluado hoy', 'en': "You haven't rated it today"});
+  String get checkSleep => _t({'es': 'Sueño de anoche', 'en': "Last night's sleep"});
+  String get notLogged => _t({'es': 'Sin registrar', 'en': 'Not logged'});
+  String get checkMeals => _t({'es': 'Comidas', 'en': 'Meals'});
+  String get ratePainNow => _t({'es': 'Evaluar el dolor', 'en': 'Rate pain'});
+  String get logSleepNow => _t({'es': 'Registrar el sueño', 'en': 'Log sleep'});
+  String reminderFor(String meal) =>
+      _t({'es': 'Recordatorio: $meal', 'en': 'Reminder: $meal'});
   String get chooseFoods => _t({'es': 'Toca para elegir alimentos', 'en': 'Tap to choose foods'});
   String get addFood => _t({'es': 'Añadir alimento…', 'en': 'Add food…'});
   String get addFoodTitle => _t({'es': 'Añadir alimento', 'en': 'Add food'});
@@ -443,6 +484,460 @@ class S {
   String get foodArchived => _t({
         'es': 'Ya lo has usado algún día: se ha ocultado para conservar tu historial.',
         'en': 'You have already used it: it was hidden to keep your history.'
+      });
+
+  // ------------------------------------------------------------------ sueño
+  String get sleep => _t({'es': 'Sueño', 'en': 'Sleep'});
+  String get sleepHelp => _t({
+        'es': 'Calidad de cada noche (1 a 5) y si dormiste con dolor.',
+        'en': 'Quality of each night (1 to 5) and whether you slept with pain.'
+      });
+  String nightOf(String from, String to) =>
+      _t({'es': 'Noche del $from al $to', 'en': 'Night of $from to $to'});
+  String get sleepNight => _t({'es': 'Noche', 'en': 'Night'});
+  String get sleepQuality => _t({'es': 'Calidad del sueño', 'en': 'Sleep quality'});
+  String sleepQualityName(int q) => switch (q) {
+        1 => _t({'es': 'Muy malo', 'en': 'Very poor'}),
+        2 => _t({'es': 'Malo', 'en': 'Poor'}),
+        3 => _t({'es': 'Regular', 'en': 'Fair'}),
+        4 => _t({'es': 'Bueno', 'en': 'Good'}),
+        _ => _t({'es': 'Muy bueno', 'en': 'Very good'}),
+      };
+  String sleepQualityValue(int q) => '$q · ${sleepQualityName(q)}';
+  String get sleepPainLabel => _t({
+        'es': 'Dolor durante la noche (opcional)',
+        'en': 'Pain during the night (optional)'
+      });
+  String get withPain => _t({'es': 'Con dolor', 'en': 'With pain'});
+  String get withoutPain => _t({'es': 'Sin dolor', 'en': 'Without pain'});
+  String get sleepNoteHint => _t({
+        'es': 'Por ejemplo: me desperté varias veces',
+        'en': 'For example: woke up several times'
+      });
+  String get chooseSleepQuality =>
+      _t({'es': 'Elige la calidad del sueño (1 a 5)', 'en': 'Choose the sleep quality (1 to 5)'});
+  String get sleepSaved => _t({'es': 'Noche guardada', 'en': 'Night saved'});
+  String get sleepDeleted => _t({'es': 'Noche borrada', 'en': 'Night deleted'});
+  String get deleteSleepQuestion => _t({'es': '¿Borrar esta noche?', 'en': 'Delete this night?'});
+  String get sleepExists => _t({
+        'es': 'Esta noche ya está registrada: al guardar se actualiza.',
+        'en': 'This night is already logged: saving updates it.'
+      });
+  String get sleepEmpty =>
+      _t({'es': 'Aún no has registrado ninguna noche.', 'en': "You haven't logged any nights yet."});
+  String get recentNights => _t({'es': 'Noches registradas', 'en': 'Logged nights'});
+
+  // -------------------------------------------------------- recordatorios
+  String get reminders => _t({'es': 'Recordatorios', 'en': 'Reminders'});
+  String get remindersHelp => _t({
+        'es': 'Hasta cinco avisos diarios «Completa HOPE». Ponlos a la hora de tus comidas: '
+            'al pulsar el aviso se abre esa toma para evaluar tu dolor y añadir lo que has comido.',
+        'en': 'Up to five daily “Complete HOPE” reminders. Set them at your mealtimes: tapping '
+            'the reminder opens that meal so you can rate your pain and add what you ate.'
+      });
+  String remindersActive(int n) => _t({
+        'es': n == 0 ? 'Ningún aviso activo' : (n == 1 ? '1 aviso activo' : '$n avisos activos'),
+        'en': n == 0 ? 'No reminders on' : (n == 1 ? '1 reminder on' : '$n reminders on'),
+      });
+  String reminderN(int n) => _t({'es': 'Aviso $n', 'en': 'Reminder $n'});
+  String get reminderOpens => _t({'es': 'Abre la toma', 'en': 'Opens meal'});
+  String reminderTimeTooltip(int n) =>
+      _t({'es': 'Cambiar la hora del aviso $n', 'en': 'Change the time of reminder $n'});
+  String get reminderTitle => _t({'es': 'Completa HOPE', 'en': 'Complete HOPE'});
+  String reminderBody(String meal) => _t({
+        'es': 'Evalúa tu dolor y registra lo que has tomado ($meal).',
+        'en': 'Rate your pain and log what you had ($meal).'
+      });
+  String get remindersChannelName =>
+      _t({'es': 'Recordatorios «Completa HOPE»', 'en': '“Complete HOPE” reminders'});
+  String get remindersChannelDescription => _t({
+        'es': 'Avisos diarios para evaluar el dolor y registrar las comidas.',
+        'en': 'Daily reminders to rate pain and log meals.'
+      });
+  String get notificationsDenied => _t({
+        'es': 'HOPE no tiene permiso para mostrar avisos. Puedes darlo en los ajustes del '
+            'sistema; mientras tanto, los recordatorios no sonarán.',
+        'en': 'HOPE is not allowed to show notifications. You can allow it in the system '
+            'settings; until then, reminders will not go off.'
+      });
+  String get remindersLimitsMobile => _t({
+        'es': 'Los avisos se programan para los próximos 12 días y se renuevan cada vez que '
+            'abres HOPE. Con el ahorro de batería, algunos móviles los retrasan unos minutos.',
+        'en': 'Reminders are scheduled for the next 12 days and renewed every time you open '
+            'HOPE. With battery saving, some phones delay them by a few minutes.'
+      });
+  String get remindersLimitsDesktop => _t({
+        'es': 'En el ordenador, HOPE solo puede avisarte mientras está abierta (aunque esté '
+            'minimizada). Para recibir los avisos con HOPE cerrada, añádelos a tu calendario.',
+        'en': 'On a computer, HOPE can only remind you while it is open (even minimised). To '
+            'get reminders with HOPE closed, add them to your calendar.'
+      });
+  String get exactAlarms => _t({'es': 'Avisos a la hora exacta', 'en': 'Exact-time reminders'});
+  String get exactAlarmsHelp => _t({
+        'es': 'Android puede retrasar los avisos unos minutos. Permite las alarmas exactas '
+            'para que lleguen puntuales.',
+        'en': 'Android may delay reminders by a few minutes. Allow exact alarms so they '
+            'arrive on time.'
+      });
+  String get allow => _t({'es': 'Permitir', 'en': 'Allow'});
+  String get addToCalendar => _t({'es': 'Añadir al calendario (.ics)', 'en': 'Add to calendar (.ics)'});
+  String get addToCalendarHelp => _t({
+        'es': 'Crea un archivo con los avisos activos, repetidos cada día, para abrirlo con tu '
+            'calendario (Outlook, Google Calendar, Apple…).',
+        'en': 'Creates a file with the active reminders, repeating daily, to open with your '
+            'calendar (Outlook, Google Calendar, Apple…).'
+      });
+  String get noRemindersEnabled =>
+      _t({'es': 'Activa al menos un aviso.', 'en': 'Turn on at least one reminder.'});
+  String get later => _t({'es': 'Más tarde', 'en': 'Later'});
+  String get open => _t({'es': 'Abrir', 'en': 'Open'});
+
+  // -------------------------------------------------------- informe completo
+  String get fullReport => _t({'es': 'Informe completo', 'en': 'Full report'});
+  String get fullReportTitle => _t({'es': 'HOPE · Informe completo', 'en': 'HOPE · Full report'});
+  String get fullReportHelp => _t({
+        'es': 'Evolución del dolor y su relación con el sueño y la alimentación.',
+        'en': 'How your pain has evolved and how it relates to sleep and food.'
+      });
+  String lastNDays(int n) => _t({'es': 'Últimos $n días', 'en': 'Last $n days'});
+  String get insufficientData => _t({'es': 'Datos insuficientes', 'en': 'Insufficient data'});
+  String get insufficientDataHelp => _t({
+        'es': 'Para sacar conclusiones hacen falta más registros en este periodo. Esto es lo que falta:',
+        'en': 'More entries are needed in this period to draw conclusions. This is what is missing:'
+      });
+  String get reportCoverage => _t({'es': 'Registros del periodo', 'en': 'Entries in this period'});
+  String coverageDays(int withAny, int total) => _t({
+        'es': 'Días con algún registro: $withAny de $total',
+        'en': 'Days with any entry: $withAny of $total'
+      });
+  String coveragePain(int records, int days) => _t({
+        'es': 'Dolor: ${nRecords(records)} en $days ${days == 1 ? 'día' : 'días'}',
+        'en': 'Pain: ${nRecords(records)} on $days ${days == 1 ? 'day' : 'days'}'
+      });
+  String coverageSleep(int nights) => _t({
+        'es': 'Sueño: $nights ${nights == 1 ? 'noche' : 'noches'}',
+        'en': 'Sleep: $nights ${nights == 1 ? 'night' : 'nights'}'
+      });
+  String coverageMeals(int eaten, int skipped, int days) => _t({
+        'es': 'Comidas: $eaten tomas con alimentos y $skipped no realizadas en $days '
+            '${days == 1 ? 'día' : 'días'}',
+        'en': 'Meals: $eaten with food and $skipped skipped on $days ${days == 1 ? 'day' : 'days'}'
+      });
+  String coverageComplete(int days, int total, String pct) => _t({
+        'es': 'Días completos (dolor, sueño y comidas): $days de $total ($pct)',
+        'en': 'Complete days (pain, sleep and meals): $days of $total ($pct)'
+      });
+  String get reportPainTitle => _t({'es': 'Evolución del dolor', 'en': 'Pain over time'});
+  String reportPainMean(String mean, String min, String max, int days) => _t({
+        'es': 'Dolor de fondo: media $mean/10, entre $min y $max ($days días con registros)',
+        'en': 'Background pain: average $mean/10, from $min to $max ($days days with entries)'
+      });
+  String reportEventsMean(String mean) => _t({
+        'es': 'Eventos (pinchazos, quemazones…): intensidad media $mean/10',
+        'en': 'Events (pricks, burning…): average intensity $mean/10'
+      });
+  String get trendStable => _t({
+        'es': 'Tendencia: estable a lo largo del periodo',
+        'en': 'Trend: stable over the period'
+      });
+  String trendUp(String change) => _t({
+        'es': 'Tendencia: en aumento, unos $change puntos a lo largo del periodo',
+        'en': 'Trend: rising, about $change points over the period'
+      });
+  String trendDown(String change) => _t({
+        'es': 'Tendencia: en descenso, unos $change puntos a lo largo del periodo',
+        'en': 'Trend: falling, about $change points over the period'
+      });
+  String halves(String first, String second) => _t({
+        'es': 'Media de la primera mitad del periodo: $first · de la segunda: $second',
+        'en': 'Average in the first half of the period: $first · in the second: $second'
+      });
+  String frequentZones(String list) =>
+      _t({'es': 'Zonas más frecuentes: $list', 'en': 'Most frequent areas: $list'});
+  String frequentTypes(String list) =>
+      _t({'es': 'Tipos de evento más frecuentes: $list', 'en': 'Most frequent event types: $list'});
+  String get reportSleepTitle => _t({'es': 'Sueño', 'en': 'Sleep'});
+  String reportSleepMean(String mean, int nights) => _t({
+        'es': 'Calidad media: $mean/5 ($nights noches)',
+        'en': 'Average quality: $mean/5 ($nights nights)'
+      });
+  String sleepDistribution(String text) =>
+      _t({'es': 'Noches por calidad: $text', 'en': 'Nights by quality: $text'});
+  String nightsWithPain(int n, int known) => _t({
+        'es': 'Noches con dolor: $n de $known en las que lo indicaste',
+        'en': 'Nights with pain: $n of the $known where you said'
+      });
+  String get sleepTrendStable =>
+      _t({'es': 'Tendencia: estable', 'en': 'Trend: stable'});
+  String sleepTrendUp(String change) => _t({
+        'es': 'Tendencia: mejora, unos $change puntos a lo largo del periodo',
+        'en': 'Trend: improving, about $change points over the period'
+      });
+  String sleepTrendDown(String change) => _t({
+        'es': 'Tendencia: empeora, unos $change puntos a lo largo del periodo',
+        'en': 'Trend: worsening, about $change points over the period'
+      });
+  String get reportFoodTitle => _t({'es': 'Alimentación', 'en': 'Food'});
+  String foodDaysLine(int days) =>
+      _t({'es': 'Días con comidas registradas: $days', 'en': 'Days with meals logged: $days'});
+  String mealStats(String meal, int eaten, int skipped) => _t({
+        'es': '$meal: $eaten con alimentos · $skipped no realizadas',
+        'en': '$meal: $eaten with food · $skipped skipped'
+      });
+  String frequentFoods(String list) => _t({
+        'es': 'Alimentos más frecuentes (días): $list',
+        'en': 'Most frequent foods (days): $list'
+      });
+  String get reportRelationsTitle =>
+      _t({'es': 'Relación con el dolor', 'en': 'Links with pain'});
+  String get relationsMetric => _t({
+        'es': 'Se compara la media del dolor de fondo (0–10) de los días de cada grupo.',
+        'en': 'The average background pain (0–10) of the days in each group is compared.'
+      });
+  String sleepVsPain(String bad, int nBad, String good, int nGood) => _t({
+        'es': 'Tras noches malas (1–2): dolor medio $bad ($nBad días). '
+            'Tras noches buenas (4–5): $good ($nGood días).',
+        'en': 'After poor nights (1–2): average pain $bad ($nBad days). '
+            'After good nights (4–5): $good ($nGood days).'
+      });
+  String sleepCorrelation(String r, String meaning) => _t({
+        'es': 'Calidad del sueño y dolor del día siguiente: r = $r ($meaning).',
+        'en': 'Sleep quality and next-day pain: r = $r ($meaning).'
+      });
+  String get correlationNegative =>
+      _t({'es': 'a peor sueño, más dolor', 'en': 'worse sleep, more pain'});
+  String get correlationPositive =>
+      _t({'es': 'a mejor sueño, más dolor', 'en': 'better sleep, more pain'});
+  String get correlationNone => _t({'es': 'sin relación clara', 'en': 'no clear link'});
+  String nightPainVsPain(String withP, int nWith, String without, int nWithout) => _t({
+        'es': 'Tras noches con dolor: $withP ($nWith días). Tras noches sin dolor: $without '
+            '($nWithout días).',
+        'en': 'After nights with pain: $withP ($nWith days). After nights without pain: '
+            '$without ($nWithout days).'
+      });
+  String foodsCompared(int n, int min) => _t({
+        'es': 'Alimentos comparados: $n (los que tomaste al menos $min días y no tomaste '
+            'otros $min).',
+        'en': 'Foods compared: $n (those you had on at least $min days and not on another $min).'
+      });
+  String get foodMorePain => _t({'es': 'Coincide con más dolor', 'en': 'Coincides with more pain'});
+  String get foodLessPain => _t({'es': 'Coincide con menos dolor', 'en': 'Coincides with less pain'});
+  String get foodSameDay => _t({'es': 'mismo día', 'en': 'same day'});
+  String get foodNextDay => _t({'es': 'día siguiente', 'en': 'next day'});
+  String comparisonText(String withM, String withoutM, String diff, int nWith, int nWithout) => _t({
+        'es': '$withM frente a $withoutM ($diff; $nWith y $nWithout días)',
+        'en': '$withM vs $withoutM ($diff; $nWith and $nWithout days)'
+      });
+  String get noFoodPattern => _t({
+        'es': 'Ningún alimento coincide con una diferencia de dolor de 1 punto o más.',
+        'en': 'No food coincides with a pain difference of 1 point or more.'
+      });
+  String skippedVsPain(String withM, int nWith, String withoutM, int nWithout) => _t({
+        'es': 'Días con alguna toma no realizada: dolor medio $withM ($nWith días). '
+            'Días sin tomas saltadas: $withoutM ($nWithout días).',
+        'en': 'Days with a skipped meal: average pain $withM ($nWith days). '
+            'Days with no skipped meals: $withoutM ($nWithout days).'
+      });
+  String missingPainDays(int have, int need) => _t({
+        'es': 'Hacen falta al menos $need días con registro de dolor en el periodo (hay $have).',
+        'en': 'At least $need days with a pain entry are needed in the period (there are $have).'
+      });
+  String missingSleep(int have, int need) => _t({
+        'es': 'Hacen falta al menos $need noches registradas (hay $have).',
+        'en': 'At least $need logged nights are needed (there are $have).'
+      });
+  String missingFood(int have, int need) => _t({
+        'es': 'Hacen falta al menos $need días con comidas registradas (hay $have).',
+        'en': 'At least $need days with meals logged are needed (there are $have).'
+      });
+  String missingSleepPain(int have, int need) => _t({
+        'es': 'Para relacionar sueño y dolor hacen falta al menos $need días con los dos '
+            'registrados (hay $have).',
+        'en': 'To link sleep and pain, at least $need days with both logged are needed '
+            '(there are $have).'
+      });
+  String missingFoodPain(int have, int need) => _t({
+        'es': 'Para relacionar alimentación y dolor hacen falta al menos $need días con comidas '
+            'y dolor registrados (hay $have).',
+        'en': 'To link food and pain, at least $need days with meals and pain logged are '
+            'needed (there are $have).'
+      });
+  String get missingSleepGroups => _t({
+        'es': 'Para comparar hacen falta al menos 2 noches malas (1–2) y 2 buenas (4–5).',
+        'en': 'At least 2 poor nights (1–2) and 2 good nights (4–5) are needed to compare.'
+      });
+  String get reportConclusions => _t({'es': 'Conclusiones', 'en': 'Conclusions'});
+  String cPainStable(String mean) => _t({
+        'es': 'El dolor de fondo se ha mantenido estable, con una media de $mean/10.',
+        'en': 'Background pain has stayed stable, averaging $mean/10.'
+      });
+  String cPainUp(String change, String mean) => _t({
+        'es': 'El dolor de fondo ha aumentado unos $change puntos a lo largo del periodo '
+            '(media $mean/10).',
+        'en': 'Background pain has risen by about $change points over the period '
+            '(average $mean/10).'
+      });
+  String cPainDown(String change, String mean) => _t({
+        'es': 'El dolor de fondo ha bajado unos $change puntos a lo largo del periodo '
+            '(media $mean/10).',
+        'en': 'Background pain has fallen by about $change points over the period '
+            '(average $mean/10).'
+      });
+  String cSleepMean(String mean) => _t({
+        'es': 'La calidad media del sueño ha sido $mean sobre 5.',
+        'en': 'Average sleep quality has been $mean out of 5.'
+      });
+  String cSleepWorse(String bad, String good) => _t({
+        'es': 'Los días después de dormir mal, el dolor fue mayor ($bad frente a $good tras '
+            'dormir bien).',
+        'en': 'On days after sleeping poorly, pain was higher ($bad vs $good after sleeping well).'
+      });
+  String cSleepBetter(String bad, String good) => _t({
+        'es': 'Los días después de dormir mal, el dolor fue menor ($bad frente a $good tras '
+            'dormir bien).',
+        'en': 'On days after sleeping poorly, pain was lower ($bad vs $good after sleeping well).'
+      });
+  String get cSleepNoDiff => _t({
+        'es': 'No se ve una diferencia clara de dolor entre los días después de dormir bien y '
+            'después de dormir mal.',
+        'en': 'There is no clear difference in pain between days after good and poor nights.'
+      });
+  String cNightPain(String withP, String without) => _t({
+        'es': 'Tras las noches con dolor, el dolor del día fue mayor ($withP frente a $without).',
+        'en': 'After nights with pain, daytime pain was higher ($withP vs $without).'
+      });
+  String cFoodMore(String names) => _t({
+        'es': 'Los días con $names coincidieron con más dolor (el mismo día o el siguiente).',
+        'en': 'Days with $names coincided with more pain (the same or the next day).'
+      });
+  String cFoodLess(String names) => _t({
+        'es': 'Los días con $names coincidieron con menos dolor (el mismo día o el siguiente).',
+        'en': 'Days with $names coincided with less pain (the same or the next day).'
+      });
+  String get cFoodNone => _t({
+        'es': 'No se observa ningún alimento que coincida con cambios claros del dolor.',
+        'en': 'No food coincides with clear changes in pain.'
+      });
+  String cSkippedMore(String diff) => _t({
+        'es': 'Los días con alguna toma no realizada, el dolor fue unos $diff puntos mayor.',
+        'en': 'On days with a skipped meal, pain was about $diff points higher.'
+      });
+  String cSkippedLess(String diff) => _t({
+        'es': 'Los días con alguna toma no realizada, el dolor fue unos $diff puntos menor.',
+        'en': 'On days with a skipped meal, pain was about $diff points lower.'
+      });
+  String get cInsufficient => _t({
+        'es': 'Todavía no hay datos suficientes para sacar conclusiones. Registra el dolor, el '
+            'sueño y las comidas cada día.',
+        'en': 'There is not enough data yet to draw conclusions. Log your pain, sleep and '
+            'meals every day.'
+      });
+  String get cAssociationNote => _t({
+        'es': 'Son coincidencias en tus registros, no pruebas de causa: con pocos días pueden '
+            'deberse al azar.',
+        'en': 'These are coincidences in your entries, not proof of cause: with few days they '
+            'may be due to chance.'
+      });
+  String get reportNotice => _t({
+        'es': 'Este informe no sustituye la valoración de un profesional sanitario.',
+        'en': 'This report does not replace an assessment by a healthcare professional.'
+      });
+  String get reportExportPdf => _t({'es': 'Guardar o compartir en PDF', 'en': 'Save or share as PDF'});
+
+  // ------------------------------------------------------- análisis con IA
+  String get aiTitle => _t({'es': 'Análisis con IA', 'en': 'AI analysis'});
+  String get aiOptional =>
+      _t({'es': 'Análisis con IA (opcional)', 'en': 'AI analysis (optional)'});
+  String get aiOn => _t({'es': 'Activado', 'en': 'On'});
+  String get aiOff => _t({'es': 'Desactivado', 'en': 'Off'});
+  String get aiHelp => _t({
+        'es': 'Desactivado por defecto. Si lo activas, el informe completo puede pedir a un '
+            'servicio de IA que redacte un análisis complementario. El informe funciona igual '
+            'sin IA.',
+        'en': 'Off by default. If you turn it on, the full report can ask an AI service to '
+            'write a complementary analysis. The report works the same without AI.'
+      });
+  String get aiWhatIsSent => _t({'es': 'Qué se envía', 'en': 'What is sent'});
+  String get aiWhatIsSentBody => _t({
+        'es': 'Solo el resumen del informe con cifras agregadas del periodo: medias de dolor y '
+            'sueño, tendencias, número de días, tomas registradas y no realizadas, y los '
+            'alimentos con sus comparaciones. No se envían tu nombre, fechas, notas, zonas '
+            'del cuerpo ni tratamientos.',
+        'en': 'Only the report summary with aggregated figures for the period: pain and sleep '
+            'averages, trends, number of days, logged and skipped meals, and the foods with '
+            'their comparisons. Your name, dates, notes, body areas and treatments are not sent.'
+      });
+  String get aiPrivacyNotice => _t({
+        'es': 'El servicio de IA es de terceros y tiene su propia política de privacidad. Son '
+            'datos de salud: actívalo solo si estás de acuerdo. Puedes desactivarlo cuando '
+            'quieras.',
+        'en': 'The AI service is a third party with its own privacy policy. This is health '
+            'data: only turn it on if you agree. You can turn it off at any time.'
+      });
+  String get aiConsentTitle => _t({'es': '¿Activar el análisis con IA?', 'en': 'Turn on AI analysis?'});
+  String get aiConsentAccept => _t({'es': 'Acepto y lo activo', 'en': 'I agree, turn it on'});
+  String get aiEndpoint =>
+      _t({'es': 'Dirección del servicio (API compatible con OpenAI)', 'en': 'Service URL (OpenAI-compatible API)'});
+  String get aiEndpointHint => 'https://api.groq.com/openai/v1/chat/completions';
+  String get aiModel => _t({'es': 'Modelo', 'en': 'Model'});
+  String get aiModelHint => _t({'es': 'p. ej. llama-3.3-70b-versatile', 'en': 'e.g. llama-3.3-70b-versatile'});
+  String get aiKey => _t({'es': 'Clave de acceso (si el servicio la pide)', 'en': 'Access key (if the service needs one)'});
+  String get aiKeyHelp => _t({
+        'es': 'Se guarda solo en este dispositivo y no se incluye en la copia de seguridad.',
+        'en': 'Stored only on this device and not included in the backup.'
+      });
+  String get aiExamples => _t({
+        'es': 'Servicios de libre acceso compatibles: Groq u OpenRouter (con una cuenta gratuita '
+            'y su clave), o Ollama en tu propio ordenador '
+            '(http://localhost:11434/v1/chat/completions, sin clave y sin enviar nada fuera de él).',
+        'en': 'Compatible free-access services: Groq or OpenRouter (with a free account and its '
+            'key), or Ollama on your own computer (http://localhost:11434/v1/chat/completions, '
+            'no key and nothing leaves the computer).'
+      });
+  String get aiTest => _t({'es': 'Probar conexión', 'en': 'Test connection'});
+  String get aiTestOk => _t({'es': 'Conexión correcta', 'en': 'Connection works'});
+  String aiError(String detail) =>
+      _t({'es': 'No se ha podido conectar: $detail', 'en': 'Could not connect: $detail'});
+  String get aiAsk => _t({'es': 'Pedir el análisis a la IA', 'en': 'Ask the AI for an analysis'});
+  String get aiWorking => _t({'es': 'Consultando a la IA…', 'en': 'Asking the AI…'});
+  String get aiFailed => _t({
+        'es': 'La IA no ha respondido. Se muestra solo el análisis local.',
+        'en': 'The AI did not respond. Only the local analysis is shown.'
+      });
+  String get aiResultTitle =>
+      _t({'es': 'Análisis complementario con IA', 'en': 'Complementary AI analysis'});
+  String get aiResultNotice => _t({
+        'es': 'Texto generado por IA a partir del resumen anterior. Puede contener errores y no '
+            'es una valoración médica.',
+        'en': 'AI-generated text based on the summary above. It may contain errors and is not '
+            'a medical assessment.'
+      });
+  String get aiNotConfigured => _t({
+        'es': 'Falta la dirección del servicio o el modelo (Ajustes → Análisis con IA).',
+        'en': 'The service URL or the model is missing (Settings → AI analysis).'
+      });
+  String get aiOffInReport => _t({
+        'es': 'Puedes activar un análisis complementario con IA en Ajustes. Es opcional.',
+        'en': 'You can turn on a complementary AI analysis in Settings. It is optional.'
+      });
+  String get aiSystemPrompt => _t({
+        'es': 'Eres un asistente que redacta un resumen de los registros personales de una '
+            'persona con dolor neuropático crónico. Describe solo patrones y coincidencias que '
+            'aparezcan en los datos que se te dan, en especial entre el dolor, el sueño y la '
+            'alimentación. No diagnostiques, no atribuyas causas médicas, no recomiendes '
+            'tratamientos, dietas, alimentos ni cambios de hábitos. Si hay pocos datos, dilo. '
+            'Recuerda que una coincidencia no demuestra una causa. Responde en español, en '
+            'frases claras y sencillas, con un máximo de 200 palabras.',
+        'en': 'You are an assistant writing a summary of the personal entries of someone with '
+            'chronic neuropathic pain. Only describe patterns and coincidences that appear in '
+            'the data given, especially between pain, sleep and food. Do not diagnose, do not '
+            'attribute medical causes, and do not recommend treatments, diets, foods or habit '
+            'changes. If there is little data, say so. Remember that a coincidence does not '
+            'prove a cause. Answer in English, in clear and simple sentences, in at most 200 words.'
+      });
+  String aiUserIntro(int days) => _t({
+        'es': 'Resumen de los registros de los últimos $days días (cifras agregadas, sin fechas):',
+        'en': 'Summary of the entries for the last $days days (aggregated figures, no dates):'
       });
 
   // -------------------------------------------------------------- gráficos

@@ -6,6 +6,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'screens/home_screen.dart';
 import 'state/app_controller.dart';
+import 'state/navigation.dart';
+import 'widgets/reminder_watcher.dart';
 
 /// Aplicación HOPE.
 class HopeApp extends StatelessWidget {
@@ -21,6 +23,7 @@ class HopeApp extends StatelessWidget {
         final app = AppScope.of(context);
         return MaterialApp(
           title: 'HOPE',
+          navigatorKey: hopeNavigatorKey,
           debugShowCheckedModeBanner: false,
           themeMode: app.themeMode,
           theme: buildHopeTheme(app, Brightness.light),
@@ -33,6 +36,7 @@ class HopeApp extends StatelessWidget {
             GlobalCupertinoLocalizations.delegate,
           ],
           home: const HomeScreen(),
+          builder: (context, child) => ReminderWatcher(child: child ?? const SizedBox.shrink()),
         );
       }),
     );

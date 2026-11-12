@@ -7,6 +7,7 @@ import 'dart:io';
 import '../models/app_settings.dart';
 import '../models/food.dart';
 import '../models/pain_record.dart';
+import '../models/sleep.dart';
 import '../models/treatment.dart';
 
 /// Almacén del histórico de registros.
@@ -51,6 +52,12 @@ abstract class FoodStore {
   Future<void> save(FoodData data);
 }
 
+/// Almacén del sueño (una entrada por noche).
+abstract class SleepStore {
+  Future<List<SleepEntry>> load();
+  Future<void> saveAll(List<SleepEntry> entries);
+}
+
 /// Versiones en memoria (para pruebas).
 class MemoryFoodStore implements FoodStore {
   MemoryFoodStore([this._data = const FoodData()]);
@@ -61,6 +68,17 @@ class MemoryFoodStore implements FoodStore {
 
   @override
   Future<void> save(FoodData data) async => _data = data;
+}
+
+class MemorySleepStore implements SleepStore {
+  MemorySleepStore([List<SleepEntry>? initial]) : _entries = [...?initial];
+  List<SleepEntry> _entries;
+
+  @override
+  Future<List<SleepEntry>> load() async => [..._entries];
+
+  @override
+  Future<void> saveAll(List<SleepEntry> entries) async => _entries = [...entries];
 }
 
 class MemoryTreatmentStore implements TreatmentStore {
@@ -264,6 +282,43 @@ class JsonFileFoodStore implements FoodStore {
       'version': 1,
       'alimentos': [for (final f in data.foods) f.toJson()],
       'dias': [for (final d in data.days) d.toJson()],
+    });
+    final next = _queue.then((_) => writeFileAtomic(file, text));
+    _queue = next.catchError((Object _) {});
+    return next;
+  }
+}
+
+/// Sueño guardado en un archivo JSON local, aparte del resto de datos.
+class JsonFileSleepStore implements SleepStore {
+  JsonFileSleepStore(this.directory);
+
+  final Directory directory;
+  Future<void> _queue = Future<void>.value();
+
+  File get file => File('${directory.path}${Platform.pathSeparator}hope_sueno.json');
+
+  @override
+  Future<List<SleepEntry>> load() async {
+    if (!await file.exists()) return [];
+    try {
+      final data = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+      return [
+        for (final n in (data['noches'] as List<dynamic>? ?? const []))
+          SleepEntry.fromJson(n as Map<String, dynamic>)
+      ];
+    } catch (_) {
+      await _setAsideCorrupt(file);
+      return [];
+    }
+  }
+
+  @override
+  Future<void> saveAll(List<SleepEntry> entries) {
+    final text = const JsonEncoder.withIndent(' ').convert({
+      'formato': 'hope-sueno',
+      'version': 1,
+      'noches': [for (final e in entries) e.toJson()],
     });
     final next = _queue.then((_) => writeFileAtomic(file, text));
     _queue = next.catchError((Object _) {});

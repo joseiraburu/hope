@@ -7,6 +7,7 @@ import '../core/version.dart';
 import '../models/app_settings.dart';
 import '../models/food.dart';
 import '../models/pain_record.dart';
+import '../models/sleep.dart';
 import '../models/treatment.dart';
 
 /// Contenido de una copia de seguridad.
@@ -18,6 +19,7 @@ class BackupData {
     this.settings,
     this.foods,
     this.foodDays,
+    this.sleep,
   });
 
   final List<PainRecord> records;
@@ -28,21 +30,25 @@ class BackupData {
   /// Alimentación (desde la versión 0.3). Nulo en copias anteriores.
   final List<FoodDef>? foods;
   final List<FoodDay>? foodDays;
+
+  /// Sueño (desde la versión 0.4). Nulo en copias anteriores.
+  final List<SleepEntry>? sleep;
 }
 
 /// Convierte los datos en el texto JSON de la copia.
 String encodeBackup(BackupData data, {DateTime? now}) {
   return const JsonEncoder.withIndent(' ').convert({
     'formato': 'hope-copia',
-    'version': 3,
+    'version': 4,
     'app': appVersion,
     'fecha': isoWithOffset(now ?? DateTime.now()),
-    if (data.settings != null) 'ajustes': data.settings!.toJson(),
+    if (data.settings != null) 'ajustes': data.settings!.toJson(includeSecrets: false),
     'registros': [for (final r in data.records) r.toJson()],
     'medicamentos': [for (final m in data.medications) m.toJson()],
     'tratamientos': [for (final t in data.treatments) t.toJson()],
     if (data.foods != null) 'alimentos': [for (final f in data.foods!) f.toJson()],
     if (data.foodDays != null) 'dias_alimentacion': [for (final d in data.foodDays!) d.toJson()],
+    if (data.sleep != null) 'sueno': [for (final e in data.sleep!) e.toJson()],
   });
 }
 
@@ -54,6 +60,7 @@ BackupData? decodeBackup(String text) {
     final settings = j['ajustes'];
     final foods = j['alimentos'];
     final foodDays = j['dias_alimentacion'];
+    final sleep = j['sueno'];
     return BackupData(
       records: [
         for (final r in (j['registros'] as List<dynamic>? ?? const []))
@@ -73,6 +80,9 @@ BackupData? decodeBackup(String text) {
           : null,
       foodDays: foodDays is List<dynamic>
           ? [for (final d in foodDays) FoodDay.fromJson(d as Map<String, dynamic>)]
+          : null,
+      sleep: sleep is List<dynamic>
+          ? [for (final e in sleep) SleepEntry.fromJson(e as Map<String, dynamic>)]
           : null,
     );
   } catch (_) {

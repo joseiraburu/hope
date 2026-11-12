@@ -18,7 +18,9 @@ import 'core/body_geometry.dart';
 import 'core/config.dart';
 import 'data/stores.dart';
 import 'export/share_service.dart';
+import 'services/reminders.dart';
 import 'state/app_controller.dart';
+import 'state/navigation.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,9 +38,22 @@ Future<void> main() async {
     settingsStore: JsonFileSettingsStore(dir),
     treatmentStore: JsonFileTreatmentStore(dir),
     foodStore: JsonFileFoodStore(dir),
+    sleepStore: JsonFileSleepStore(dir),
   );
   await controller.init();
+  // Recordatorios «Completa HOPE»: se preparan (y se atiende el aviso que
+  // haya abierto la app) y se renuevan los de los próximos días.
+  final reminders = controller.settings.reminders;
+  if (controller.settings.anyReminderEnabled) {
+    await ReminderService.instance.init();
+  }
   runApp(HopeApp(controller: controller));
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    ReminderService.instance.onOpen = openReminderMeal;
+  });
+  if (controller.settings.anyReminderEnabled) {
+    unawaited(ReminderService.instance.reschedule(reminders, controller.strings));
+  }
   // Archivos que quedaran de exportaciones anteriores.
   unawaited(cleanExportFiles());
 }

@@ -11,13 +11,17 @@ import 'dialogs.dart';
 /// Con más alimentos que estos, la lista muestra un buscador.
 const int foodSearchThreshold = 15;
 
-/// Nombre de una franja del día: «Mañana» o «Tarde».
-String mealSlotName(AppController app, MealSlot slot) =>
-    slot == MealSlot.morning ? app.strings.morning : app.strings.afternoon;
+/// Nombre de una toma: «Desayuno», «Almuerzo», «Comida», «Merienda» o «Cena».
+String mealSlotName(AppController app, MealSlot slot) => app.strings.meal(slot);
 
-/// Icono de una franja del día.
-IconData mealSlotIcon(MealSlot slot) =>
-    slot == MealSlot.morning ? Icons.free_breakfast_outlined : Icons.lunch_dining_outlined;
+/// Icono de una toma.
+IconData mealSlotIcon(MealSlot slot) => switch (slot) {
+      MealSlot.breakfast => Icons.free_breakfast_outlined,
+      MealSlot.midMorning => Icons.bakery_dining_outlined,
+      MealSlot.lunch => Icons.lunch_dining_outlined,
+      MealSlot.snack => Icons.cookie_outlined,
+      MealSlot.dinner => Icons.dinner_dining_outlined,
+    };
 
 /// Pide el nombre de un alimento nuevo y lo añade a la lista. Si ya existe,
 /// devuelve el existente. Devuelve null si se cancela.
@@ -35,9 +39,9 @@ Future<({String id, bool existed})?> askNewFood(BuildContext context) async {
   return (id: result.food.id, existed: result.existed);
 }
 
-/// Hoja inferior para elegir los alimentos de la mañana o de la tarde
-/// (selección múltiple). La última opción añade un alimento nuevo, que queda
-/// marcado y disponible en las dos listas para cualquier día.
+/// Hoja inferior para elegir los alimentos de una toma (selección
+/// múltiple). La última opción añade un alimento nuevo, que queda marcado y
+/// disponible en todas las tomas para cualquier día.
 Future<void> showFoodPicker(BuildContext context, FoodDraft draft, MealSlot slot) {
   return showModalBottomSheet<void>(
     context: context,

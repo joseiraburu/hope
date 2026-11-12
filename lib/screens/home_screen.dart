@@ -23,7 +23,9 @@ import '../widgets/vertical_control.dart';
 import 'charts_screen.dart';
 import 'food_screen.dart';
 import 'history_screen.dart';
+import 'report_screen.dart';
 import 'settings_screen.dart';
+import 'sleep_screen.dart';
 import 'treatments_screen.dart';
 
 /// Pantalla principal: silueta animada y los cuatro controles.
@@ -158,6 +160,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FoodScreen()));
   }
 
+  void _openSleep() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SleepScreen()));
+  }
+
+  void _openReport() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ReportScreen()));
+  }
+
   /// Los avisos flotan por encima de la barra de botones para no taparla.
   static const _snackMargin = EdgeInsets.fromLTRB(12, 0, 12, 92);
 
@@ -265,6 +275,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               const SingleActivator(LogicalKeyboardKey.keyG): _openCharts,
               const SingleActivator(LogicalKeyboardKey.keyT): _openTreatments,
               const SingleActivator(LogicalKeyboardKey.keyA): _openFood,
+              const SingleActivator(LogicalKeyboardKey.keyS): _openSleep,
+              const SingleActivator(LogicalKeyboardKey.keyI): _openReport,
             },
           },
           child: Focus(
@@ -385,6 +397,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             icon: const Icon(Icons.more_vert),
             onSelected: (v) {
               if (v == 'food') _openFood();
+              if (v == 'sleep') _openSleep();
+              if (v == 'report') _openReport();
               if (v == 'treatments') _openTreatments();
               if (v == 'settings') _openSettings();
               if (v == 'about') showHopeAbout(context);
@@ -393,6 +407,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               PopupMenuItem(
                 value: 'food',
                 child: ListTile(leading: const Icon(Icons.restaurant), title: Text(s.food)),
+              ),
+              PopupMenuItem(
+                value: 'sleep',
+                child: ListTile(leading: const Icon(Icons.bedtime_outlined), title: Text(s.sleep)),
+              ),
+              PopupMenuItem(
+                value: 'report',
+                child: ListTile(leading: const Icon(Icons.summarize_outlined), title: Text(s.fullReport)),
               ),
               PopupMenuItem(
                 value: 'treatments',

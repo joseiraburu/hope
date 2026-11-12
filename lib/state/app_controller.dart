@@ -12,6 +12,7 @@ import '../l10n/strings.dart';
 import '../models/app_settings.dart';
 import '../models/food.dart';
 import '../models/pain_record.dart';
+import '../models/sleep.dart';
 import '../models/treatment.dart';
 
 /// Estado global: configuración, histórico, tratamientos, alimentación y
@@ -24,8 +25,10 @@ class AppController extends ChangeNotifier {
     required this.settingsStore,
     TreatmentStore? treatmentStore,
     FoodStore? foodStore,
+    SleepStore? sleepStore,
   })  : treatmentStore = treatmentStore ?? MemoryTreatmentStore(),
-        foodStore = foodStore ?? MemoryFoodStore();
+        foodStore = foodStore ?? MemoryFoodStore(),
+        sleepStore = sleepStore ?? MemorySleepStore();
 
   final AppConfig config;
   final BodyGeometry geometry;
@@ -33,6 +36,7 @@ class AppController extends ChangeNotifier {
   final SettingsStore settingsStore;
   final TreatmentStore treatmentStore;
   final FoodStore foodStore;
+  final SleepStore sleepStore;
 
   List<PainRecord> _records = [];
   AppSettings _settings = const AppSettings();
@@ -46,6 +50,9 @@ class AppController extends ChangeNotifier {
 
   /// Días con comidas, del más reciente al más antiguo.
   List<FoodDay> _foodDays = [];
+
+  /// Noches registradas, de la más reciente a la más antigua.
+  List<SleepEntry> _sleep = [];
 
   AppSettings get settings => _settings;
 
@@ -68,6 +75,7 @@ class AppController extends ChangeNotifier {
     final food = await foodStore.load();
     _foodEntries = [...food.foods];
     _foodDays = _uniqueDays(food.days);
+    _sleep = _uniqueNights(await sleepStore.load());
   }
 
   void _sort() => _records.sort((a, b) => b.dateTime.compareTo(a.dateTime));
@@ -119,16 +127,19 @@ class AppController extends ChangeNotifier {
     _medicationEntries = [];
     _foodEntries = [];
     _foodDays = [];
+    _sleep = [];
     notifyListeners();
     await recordStore.saveAll(_records);
     await _saveTreatments();
     await _saveFood();
+    await sleepStore.saveAll(_sleep);
   }
 
   /// Sustituye todos los datos (al importar una copia de seguridad).
   ///
   /// Las copias anteriores a la versión 0.3 no tienen alimentación
-  /// ([foods] y [foodDays] nulos): entonces se conserva la del dispositivo.
+  /// ([foods] y [foodDays] nulos) y las anteriores a la 0.4 no tienen sueño
+  /// ([sleep] nulo): entonces se conserva lo que haya en el dispositivo.
   Future<void> replaceAll({
     required List<PainRecord> records,
     required List<Treatment> treatments,
@@ -136,6 +147,7 @@ class AppController extends ChangeNotifier {
     AppSettings? settings,
     List<FoodDef>? foods,
     List<FoodDay>? foodDays,
+    List<SleepEntry>? sleep,
   }) async {
     _records = [...records];
     _sort();
@@ -148,10 +160,12 @@ class AppController extends ChangeNotifier {
       _foodEntries = [...?foods];
       _foodDays = _uniqueDays(foodDays ?? const []);
     }
+    if (sleep != null) _sleep = _uniqueNights(sleep);
     notifyListeners();
     await recordStore.saveAll(_records);
     await _saveTreatments();
     if (hasFood) await _saveFood();
+    if (sleep != null) await sleepStore.saveAll(_sleep);
     if (settings != null) await settingsStore.save(settings);
   }
 
@@ -314,9 +328,14 @@ class AppController extends ChangeNotifier {
   /// ningún alimento se borra.
   Future<void> saveFoodDay(FoodDay day) async {
     bool known(String id) => foodById(id) != null;
-    final clean = day.copyWith(
-      morning: [...{for (final id in day.morning) if (known(id)) id}],
-      afternoon: [...{for (final id in day.afternoon) if (known(id)) id}],
+    final clean = FoodDay(
+      date: day.date,
+      meals: {
+        for (final e in day.meals.entries)
+          e.key: e.value.copyWith(
+            foods: [...{for (final id in e.value.foods) if (known(id)) id}],
+          ),
+      },
       updatedAt: DateTime.now(),
     );
     _foodDays.removeWhere((d) => d.key == clean.key);
@@ -483,6 +502,71 @@ class AppController extends ChangeNotifier {
     notifyListeners();
     await _saveFood();
     return true;
+  }
+
+  // ------------------------------------------------------------------ sueño
+  /// Una entrada por noche (si hubiera dos, queda la última guardada), de la
+  /// más reciente a la más antigua.
+  static List<SleepEntry> _uniqueNights(List<SleepEntry> entries) {
+    final byKey = <String, SleepEntry>{};
+    for (final e in entries) {
+      final previous = byKey[e.key];
+      final newer = previous == null ||
+          (e.updatedAt != null &&
+              (previous.updatedAt == null || !e.updatedAt!.isBefore(previous.updatedAt!)));
+      if (newer) byKey[e.key] = e;
+    }
+    final list = byKey.values.toList()..sort((a, b) => b.date.compareTo(a.date));
+    return list;
+  }
+
+  /// Noches registradas, de la más reciente a la más antigua.
+  List<SleepEntry> get sleepEntries => List.unmodifiable(_sleep);
+
+  /// La noche que termina el día [day] (null si no se registró).
+  SleepEntry? sleepFor(DateTime day) {
+    final key = dayKey(day);
+    for (final e in _sleep) {
+      if (e.key == key) return e;
+    }
+    return null;
+  }
+
+  /// Guarda una noche y sustituye la que hubiera ese día.
+  Future<void> saveSleep(SleepEntry entry) async {
+    final clean = entry.copyWith(note: entry.note.trim(), updatedAt: DateTime.now());
+    _sleep.removeWhere((e) => e.key == clean.key);
+    _sleep.add(clean);
+    _sleep.sort((a, b) => b.date.compareTo(a.date));
+    notifyListeners();
+    await sleepStore.saveAll(_sleep);
+  }
+
+  /// Borra una noche y la devuelve (para poder deshacer).
+  Future<SleepEntry?> deleteSleep(DateTime day) async {
+    final key = dayKey(day);
+    final i = _sleep.indexWhere((e) => e.key == key);
+    if (i < 0) return null;
+    final removed = _sleep.removeAt(i);
+    notifyListeners();
+    await sleepStore.saveAll(_sleep);
+    return removed;
+  }
+
+  /// Vuelve a poner una noche borrada tal como estaba.
+  Future<void> restoreSleep(SleepEntry entry) async {
+    _sleep.removeWhere((e) => e.key == entry.key);
+    _sleep.add(entry);
+    _sleep.sort((a, b) => b.date.compareTo(a.date));
+    notifyListeners();
+    await sleepStore.saveAll(_sleep);
+  }
+
+  // ------------------------------------------------------- «Completa HOPE»
+  /// Registros de dolor de un día (del más reciente al más antiguo).
+  List<PainRecord> recordsOn(DateTime day) {
+    final key = dayKey(day);
+    return [for (final r in _records) if (dayKey(r.dateTime) == key) r];
   }
 
   // --------------------------------------------------------------- ajustes

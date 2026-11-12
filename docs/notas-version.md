@@ -1,13 +1,14 @@
-## Novedades de la versión 0.3
+## Novedades de la versión 0.4
 
-- **Alimentación** (menú ⋮ → Alimentación, o tecla A en Windows): elige el día y lo que comiste por la **mañana** y por la **tarde** de una lista de alimentos básicos (pan, pasta, arroz, carne roja, carne blanca, pescado, grasa vegetal, azúcar…). Puedes añadir tus propios alimentos: quedan en la lista para los días siguientes.
-- **Historial de alimentación** por días, con filtro por alimento. Desde cada día, **«Ver relación con el dolor»** muestra en una sola pantalla los alimentos del Día 1 y tu dolor de fondo de los **Días 1, 2, 3 y 4**, junto a tu media de los 7 días anteriores. Muestra coincidencias en el tiempo, no causas: coméntalas con tu equipo médico.
-- **Mis alimentos** (Ajustes → Alimentación): cambia el nombre, oculta o borra los alimentos de las listas sin perder tu historial.
-- **iPhone y iPad:** primera versión para iOS, con todas las funciones, también el vídeo MP4.
-- La **copia de seguridad** incluye ahora la alimentación. Las copias de la versión 0.2 se siguen pudiendo importar.
-- Todo lo nuevo está en **español e inglés** (Ajustes → Apariencia → Idioma).
+- **Cinco comidas al día:** desayuno, almuerzo, comida, merienda y cena, cada una con su lista desplegable de alimentos, su hora y la opción **«No realizada»**. Puedes añadir alimentos concretos a la lista.
+- **Sueño:** puntúa cada noche de 1 (muy malo) a 5 (muy bueno) e indica si dormiste con dolor o sin dolor.
+- **Recordatorios «Completa HOPE»:** hasta cinco avisos al día, a la hora de tus comidas. Al pulsarlo se abre esa toma, con lo que te falta por registrar hoy. Ajustes → Recordatorios.
+- **Informe completo:** evolución del dolor de los últimos 7, 14 o 30 días y su relación con el sueño y con lo que comes, para ver patrones. Si faltan registros, el informe indica **«Datos insuficientes»** y qué falta. Se guarda en PDF para llevarlo a la consulta.
+- **Análisis con IA (opcional):** desactivado por defecto. Si lo activas, se envía solo un resumen anónimo al servicio que elijas.
 
-**Si tienes la versión 0.2 en Android o Windows:** instala la 0.3 encima. Tus registros, tratamientos y ajustes se conservan (si el APK de Android está firmado con la misma clave que el anterior).
+Incluye también todo lo de la versión 0.3: alimentación, relación de la comida con el dolor de los días siguientes y app para iPhone y iPad.
+
+**Si ya tenías HOPE:** instala la 0.4 encima. Tus registros se conservan (en Android, si el APK está firmado con la misma clave que el anterior). Lo que registraste en Alimentación como «Mañana» y «Tarde» aparece como desayuno y comida.
 
 ## Cómo instalar HOPE
 

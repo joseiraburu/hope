@@ -11,6 +11,7 @@ import 'package:hope/models/app_settings.dart';
 import 'package:hope/models/food.dart';
 import 'package:hope/models/pain_record.dart';
 import 'package:hope/state/app_controller.dart';
+import 'package:hope/state/food_draft.dart';
 
 import 'helpers.dart';
 
@@ -70,23 +71,81 @@ void main() {
   });
 
   group('modelo', () {
-    test('un día de comidas se guarda y se recupera igual (JSON)', () {
+    test('un día con sus cinco tomas se guarda y se recupera igual (JSON)', () {
       final day = FoodDay(
         date: DateTime(2026, 11, 2, 18, 30),
-        morning: const ['bread', 'coffee'],
-        afternoon: const ['pasta'],
+        meals: const {
+          MealSlot.breakfast: MealLog(foods: ['bread', 'coffee'], time: '08:15'),
+          MealSlot.midMorning: MealLog(skipped: true),
+          MealSlot.lunch: MealLog(foods: ['pasta']),
+          // Una toma vacía no se guarda.
+          MealSlot.snack: MealLog(),
+          MealSlot.dinner: MealLog(foods: ['fish', 'vegetables'], time: '21:30'),
+        },
         updatedAt: DateTime(2026, 11, 2, 19),
       );
       expect(day.date, DateTime(2026, 11, 2));
       expect(day.key, '2026-11-02');
+      expect(day.meals.containsKey(MealSlot.snack), isFalse);
+      expect(day.eatenSlots, [MealSlot.breakfast, MealSlot.lunch, MealSlot.dinner]);
+      expect(day.skippedSlots, [MealSlot.midMorning]);
       final json = day.toJson();
       expect(json['fecha'], '2026-11-02');
+      expect((json['comidas'] as Map).keys, ['desayuno', 'almuerzo', 'comida', 'cena']);
       final back = FoodDay.fromJson(jsonDecode(jsonEncode(json)) as Map<String, dynamic>);
       expect(back.date, DateTime(2026, 11, 2));
-      expect(back.morning, ['bread', 'coffee']);
-      expect(back.afternoon, ['pasta']);
-      expect(back.foods, {'bread', 'coffee', 'pasta'});
+      expect(back.slot(MealSlot.breakfast), ['bread', 'coffee']);
+      expect(back.meal(MealSlot.breakfast).time, '08:15');
+      expect(back.isSkipped(MealSlot.midMorning), isTrue);
+      expect(back.slot(MealSlot.lunch), ['pasta']);
+      expect(back.meal(MealSlot.lunch).time, isNull);
+      expect(back.meal(MealSlot.snack).isEmpty, isTrue);
+      expect(back.meal(MealSlot.dinner).time, '21:30');
+      expect(back.foods, {'bread', 'coffee', 'pasta', 'fish', 'vegetables'});
       expect(back.updatedAt, isNotNull);
+    });
+
+    test('los días de la primera versión (mañana y tarde) pasan a desayuno y comida', () {
+      final back = FoodDay.fromJson(const {
+        'fecha': '2026-11-01',
+        'manana': ['bread', 'coffee'],
+        'tarde': ['pasta'],
+      });
+      expect(back.slot(MealSlot.breakfast), ['bread', 'coffee']);
+      expect(back.slot(MealSlot.lunch), ['pasta']);
+      expect(back.toJson().containsKey('manana'), isFalse);
+    });
+
+    test('las horas se normalizan y las no válidas se descartan', () {
+      expect(normalizeMealTime('8:5'), '08:05');
+      expect(normalizeMealTime(' 21:30 '), '21:30');
+      expect(normalizeMealTime('24:00'), isNull);
+      expect(normalizeMealTime('mañana'), isNull);
+      expect(normalizeMealTime(null), isNull);
+    });
+
+    test('borrador: elegir alimentos pone la hora y «No realizada» los quita', () {
+      final draft = FoodDraft(DateTime(2026, 11, 2), clock: () => DateTime(2026, 11, 2, 13, 47));
+      expect(draft.isToday, isTrue);
+      draft.add(MealSlot.lunch, 'pasta');
+      expect(draft.time(MealSlot.lunch), '13:47');
+      draft.setSkipped(MealSlot.lunch, true);
+      expect(draft.slot(MealSlot.lunch), isEmpty);
+      expect(draft.time(MealSlot.lunch), isNull);
+      // Elegir un alimento desmarca «No realizada».
+      draft.add(MealSlot.lunch, 'rice');
+      expect(draft.isSkipped(MealSlot.lunch), isFalse);
+      draft.setSkipped(MealSlot.dinner, true);
+      final day = draft.toFoodDay();
+      expect(day.slot(MealSlot.lunch), ['rice']);
+      expect(day.isSkipped(MealSlot.dinner), isTrue);
+
+      // Otro día: la hora de partida es la habitual de la toma.
+      final past = FoodDraft(DateTime(2026, 10, 30), clock: () => DateTime(2026, 11, 2, 13, 47));
+      past.add(MealSlot.snack, 'fruit');
+      expect(past.time(MealSlot.snack), '17:30');
+      past.setTime(MealSlot.snack, '18:5');
+      expect(past.time(MealSlot.snack), '18:05');
     });
 
     test('la clave del día es la fecha local de calendario', () {
@@ -148,7 +207,7 @@ void main() {
       final c = await foodController();
       final used = await c.addFood('Tofu');
       final unused = await c.addFood('Quinoa');
-      await c.saveFoodDay(FoodDay(date: DateTime(2026, 11, 1), morning: [used.food.id]));
+      await c.saveFoodDay(FoodDay.withFoods(DateTime(2026, 11, 1), {MealSlot.breakfast: [used.food.id]}));
 
       expect(await c.deleteFood(unused.food.id), isTrue);
       expect(c.foodById(unused.food.id), isNull);
@@ -171,39 +230,36 @@ void main() {
     test('un registro por día: guardar otra vez lo actualiza', () async {
       final c = await foodController();
       final day = DateTime(2026, 11, 2);
-      await c.saveFoodDay(FoodDay(date: day, morning: const ['bread']));
-      await c.saveFoodDay(FoodDay(date: day.add(const Duration(hours: 20)), morning: const ['bread', 'coffee']));
+      await c.saveFoodDay(FoodDay.withFoods(day, {MealSlot.breakfast: const ['bread']}));
+      await c.saveFoodDay(FoodDay.withFoods(day.add(const Duration(hours: 20)), {MealSlot.breakfast: const ['bread', 'coffee']}));
       expect(c.foodDays.length, 1);
-      expect(c.foodDayFor(day)!.morning, ['bread', 'coffee']);
+      expect(c.foodDayFor(day)!.slot(MealSlot.breakfast), ['bread', 'coffee']);
     });
 
     test('el historial va del más reciente al más antiguo', () async {
       final c = await foodController();
-      await c.saveFoodDay(FoodDay(date: DateTime(2026, 10, 30), afternoon: const ['fish']));
-      await c.saveFoodDay(FoodDay(date: DateTime(2026, 11, 2), morning: const ['bread']));
-      await c.saveFoodDay(FoodDay(date: DateTime(2026, 11, 1), morning: const ['eggs']));
+      await c.saveFoodDay(FoodDay.withFoods(DateTime(2026, 10, 30), {MealSlot.lunch: const ['fish']}));
+      await c.saveFoodDay(FoodDay.withFoods(DateTime(2026, 11, 2), {MealSlot.breakfast: const ['bread']}));
+      await c.saveFoodDay(FoodDay.withFoods(DateTime(2026, 11, 1), {MealSlot.breakfast: const ['eggs']}));
       expect(c.foodDays.map((d) => d.key), ['2026-11-02', '2026-11-01', '2026-10-30']);
     });
 
     test('borrar un día se puede deshacer y un día vacío no se guarda', () async {
       final c = await foodController();
       final day = DateTime(2026, 11, 2);
-      await c.saveFoodDay(FoodDay(date: day, morning: const ['bread'], afternoon: const ['pasta']));
+      await c.saveFoodDay(FoodDay.withFoods(day, {MealSlot.breakfast: const ['bread'], MealSlot.lunch: const ['pasta']}));
       final removed = await c.deleteFoodDay(day);
       expect(c.foodDays, isEmpty);
       await c.restoreFoodDay(removed!);
-      expect(c.foodDayFor(day)!.afternoon, ['pasta']);
+      expect(c.foodDayFor(day)!.slot(MealSlot.lunch), ['pasta']);
       await c.saveFoodDay(FoodDay(date: day));
       expect(c.foodDayFor(day), isNull);
     });
 
     test('los alimentos repetidos o desconocidos no se guardan', () async {
       final c = await foodController();
-      await c.saveFoodDay(FoodDay(
-        date: DateTime(2026, 11, 2),
-        morning: const ['bread', 'bread', 'no_existe'],
-      ));
-      expect(c.foodDayFor(DateTime(2026, 11, 2))!.morning, ['bread']);
+      await c.saveFoodDay(FoodDay.withFoods(DateTime(2026, 11, 2), {MealSlot.breakfast: const ['bread', 'bread', 'no_existe']}));
+      expect(c.foodDayFor(DateTime(2026, 11, 2))!.slot(MealSlot.breakfast), ['bread']);
     });
 
     test('se guarda en su propio archivo y se recupera', () async {
@@ -213,11 +269,11 @@ void main() {
       expect((await store.load()).days, isEmpty);
       await store.save(FoodData(
         foods: const [FoodDef(id: 'ali_12345678', customName: 'Kéfir')],
-        days: [FoodDay(date: DateTime(2026, 11, 2), morning: const ['ali_12345678', 'bread'])],
+        days: [FoodDay.withFoods(DateTime(2026, 11, 2), {MealSlot.breakfast: const ['ali_12345678', 'bread']})],
       ));
       final back = await store.load();
       expect(back.foods.single.customName, 'Kéfir');
-      expect(back.days.single.morning, ['ali_12345678', 'bread']);
+      expect(back.days.single.slot(MealSlot.breakfast), ['ali_12345678', 'bread']);
       expect(File('${dir.path}/hope_alimentacion.json').existsSync(), isTrue);
     });
 
@@ -298,7 +354,7 @@ void main() {
     test('incluye la alimentación', () async {
       final c = await foodController();
       final kefir = await c.addFood('Kéfir');
-      await c.saveFoodDay(FoodDay(date: DateTime(2026, 11, 2), morning: [kefir.food.id]));
+      await c.saveFoodDay(FoodDay.withFoods(DateTime(2026, 11, 2), {MealSlot.breakfast: [kefir.food.id]}));
       final text = encodeBackup(BackupData(
         records: c.records,
         treatments: c.treatments,
@@ -309,7 +365,7 @@ void main() {
       ));
       final back = decodeBackup(text)!;
       expect(back.foods!.single.customName, 'Kéfir');
-      expect(back.foodDays!.single.morning, [kefir.food.id]);
+      expect(back.foodDays!.single.slot(MealSlot.breakfast), [kefir.food.id]);
 
       final target = await foodController();
       await target.replaceAll(
@@ -331,7 +387,7 @@ void main() {
       expect(data.foodDays, isNull);
 
       final c = await foodController();
-      await c.saveFoodDay(FoodDay(date: DateTime(2026, 11, 2), morning: const ['bread']));
+      await c.saveFoodDay(FoodDay.withFoods(DateTime(2026, 11, 2), {MealSlot.breakfast: const ['bread']}));
       await c.replaceAll(
         records: data.records,
         treatments: data.treatments,
@@ -345,7 +401,7 @@ void main() {
     test('borrar todos los datos borra también la alimentación', () async {
       final c = await foodController();
       await c.addFood('Kéfir');
-      await c.saveFoodDay(FoodDay(date: DateTime(2026, 11, 2), morning: const ['bread']));
+      await c.saveFoodDay(FoodDay.withFoods(DateTime(2026, 11, 2), {MealSlot.breakfast: const ['bread']}));
       await c.deleteAll();
       expect(c.foodDays, isEmpty);
       expect(c.foodEntries, isEmpty);

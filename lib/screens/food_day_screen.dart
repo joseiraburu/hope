@@ -62,11 +62,16 @@ class FoodDayScreen extends StatelessWidget {
               children: [
                 Icon(mealSlotIcon(slot), color: theme.colorScheme.primary),
                 const SizedBox(width: 8),
-                Text(mealSlotName(app, slot), style: theme.textTheme.titleMedium),
+                Expanded(child: Text(mealSlotName(app, slot), style: theme.textTheme.titleMedium)),
+                if (day.meal(slot).time != null)
+                  Text(day.meal(slot).time!, style: theme.textTheme.bodyMedium),
               ],
             ),
             const SizedBox(height: 8),
-            FoodChips(ids: day.slot(slot)),
+            if (day.isSkipped(slot))
+              Text(s.mealSkipped, style: theme.textTheme.bodyMedium)
+            else
+              FoodChips(ids: day.slot(slot)),
             const SizedBox(height: 20),
           ],
           FilledButton.icon(

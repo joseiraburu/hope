@@ -7,6 +7,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
 import '../data/backup.dart';
+import '../services/reminders.dart';
 import '../state/app_controller.dart';
 import '../utils/format.dart';
 import '../widgets/dialogs.dart';
@@ -24,6 +25,7 @@ Future<void> exportBackup(BuildContext context) async {
     settings: app.settings,
     foods: app.foodEntries,
     foodDays: app.foodDays,
+    sleep: app.sleepEntries,
   ));
   final file = await writeExportFile('HOPE_copia_${isoDate(DateTime.now())}.json', utf8.encode(text));
   if (!context.mounted) return;
@@ -66,9 +68,13 @@ Future<void> importBackup(BuildContext context) async {
     records: data.records,
     treatments: data.treatments,
     medications: data.medications,
-    settings: data.settings?.copyWith(firstRunDone: true),
+    // La clave del servicio de IA no viaja en la copia: se conserva la del
+    // dispositivo.
+    settings: data.settings?.copyWith(firstRunDone: true, aiKey: app.settings.aiKey),
     foods: data.foods,
     foodDays: data.foodDays,
+    sleep: data.sleep,
   );
+  await ReminderService.instance.reschedule(app.settings.reminders, app.strings);
   messenger?.showSnackBar(SnackBar(content: Text(s.backupImported(data.records.length, data.treatments.length))));
 }

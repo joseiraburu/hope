@@ -187,18 +187,26 @@ class _FoodHeader extends StatelessWidget {
               style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 10),
-            for (final slot in MealSlot.values) ...[
-              Row(
-                children: [
-                  Icon(mealSlotIcon(slot), size: 18, color: theme.colorScheme.primary),
-                  const SizedBox(width: 6),
-                  Text(mealSlotName(app, slot), style: theme.textTheme.labelLarge),
-                ],
-              ),
-              const SizedBox(height: 6),
-              FoodChips(ids: foodDay?.slot(slot) ?? const [], dense: true),
+            if (foodDay == null || foodDay!.isEmpty) ...[
+              const FoodChips(ids: [], dense: true),
               const SizedBox(height: 10),
             ],
+            for (final slot in MealSlot.values)
+              if (foodDay != null && !foodDay!.meal(slot).isEmpty) ...[
+                Row(
+                  children: [
+                    Icon(mealSlotIcon(slot), size: 18, color: theme.colorScheme.primary),
+                    const SizedBox(width: 6),
+                    Text(mealSlotName(app, slot), style: theme.textTheme.labelLarge),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                if (foodDay!.isSkipped(slot))
+                  Text(s.mealSkipped, style: theme.textTheme.bodySmall)
+                else
+                  FoodChips(ids: foodDay!.slot(slot), dense: true),
+                const SizedBox(height: 10),
+              ],
           ],
         ),
       ),

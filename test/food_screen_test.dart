@@ -80,9 +80,16 @@ PainRecord pain(DateTime at, int intensity, {String note = ''}) => PainRecord(
       note: note,
     );
 
-/// Campos desplegables de la mañana y de la tarde.
-final morningField = find.byKey(const ValueKey('food-slot-morning'));
-final afternoonField = find.byKey(const ValueKey('food-slot-afternoon'));
+/// Campos desplegables del desayuno y de la comida.
+final morningField = find.byKey(const ValueKey('food-slot-desayuno'));
+final afternoonField = find.byKey(const ValueKey('food-slot-comida'));
+
+/// Lleva un campo a la vista y lo pulsa.
+Future<void> tapField(WidgetTester tester, Finder field) async {
+  await tester.ensureVisible(field);
+  await tester.pump();
+  await tester.tap(field);
+}
 
 /// Elige un alimento en la hoja abierta buscándolo por su nombre.
 Future<void> pickFood(WidgetTester tester, String query, String name) async {
@@ -93,7 +100,7 @@ Future<void> pickFood(WidgetTester tester, String query, String name) async {
 }
 
 void main() {
-  testWidgets('se abre desde el menú y registra la mañana y la tarde', (tester) async {
+  testWidgets('se abre desde Ajustes y registra el desayuno y la comida', (tester) async {
     await setScreen(tester, const Size(412, 915));
     final controller = await testController();
     await tester.pumpWidget(HopeApp(controller: controller));
@@ -106,8 +113,15 @@ void main() {
     expect(find.byType(FoodScreen), findsOneWidget);
     expect(find.textContaining('Hoy ·'), findsOneWidget);
 
-    // Mañana: pan, café y un alimento nuevo.
-    await tester.tap(morningField);
+    // Las cinco tomas del día y la tarjeta «Completa HOPE».
+    for (final key in ['desayuno', 'almuerzo', 'comida', 'merienda', 'cena']) {
+      expect(find.byKey(ValueKey('food-slot-$key'), skipOffstage: false), findsOneWidget);
+    }
+    expect(find.text('Completa HOPE'), findsOneWidget);
+    expect(find.text('Aún no lo has evaluado hoy'), findsOneWidget);
+
+    // Desayuno: pan, café y un alimento nuevo.
+    await tapField(tester, morningField);
     await settle(tester);
     await pickFood(tester, 'pan', 'Pan');
     await pickFood(tester, 'caf', 'Café');
@@ -136,8 +150,8 @@ void main() {
     expect(find.text('Kéfir'), findsOneWidget);
     expect(find.text('3 alimentos'), findsOneWidget);
 
-    // Tarde: pasta.
-    await tester.tap(afternoonField);
+    // Comida: pasta.
+    await tapField(tester, afternoonField);
     await settle(tester);
     await pickFood(tester, 'past', 'Pasta');
     await tester.tap(find.text('Listo'));
@@ -147,16 +161,18 @@ void main() {
     await settle(tester);
     final saved = controller.foodDayFor(DateTime.now())!;
     final kefir = controller.findFoodByName('kefir')!.id;
-    expect(saved.morning, ['bread', 'coffee', kefir]);
-    expect(saved.afternoon, ['pasta']);
+    expect(saved.slot(MealSlot.breakfast), ['bread', 'coffee', kefir]);
+    expect(saved.slot(MealSlot.lunch), ['pasta']);
     expect(find.text('Guardado'), findsOneWidget);
+    // Al elegir alimentos hoy, la toma toma la hora actual.
+    expect(saved.meal(MealSlot.breakfast).time, isNotNull);
 
     // Historial → detalle del día → relación con el dolor.
     await tester.tap(find.text('Historial'));
     await settle(tester);
-    expect(find.text('Mañana: Pan, Café, Kéfir'), findsOneWidget);
-    expect(find.text('Tarde: Pasta'), findsOneWidget);
-    await tester.tap(find.text('Mañana: Pan, Café, Kéfir'));
+    expect(find.textContaining(': Pan, Café, Kéfir'), findsOneWidget);
+    expect(find.textContaining(RegExp(r'^Comida \(\d\d:\d\d\): Pasta$')), findsOneWidget);
+    await tester.tap(find.textContaining(': Pan, Café, Kéfir'));
     await settle(tester);
     await tester.tap(find.text('Ver relación con el dolor'));
     await settle(tester);
@@ -173,7 +189,7 @@ void main() {
     final controller = await controllerWith();
     await pumpScreen(tester, controller, const FoodScreen());
 
-    await tester.tap(morningField);
+    await tapField(tester, morningField);
     await settle(tester);
     await pickFood(tester, 'arro', 'Arroz');
     await tester.tap(find.text('Listo'));
@@ -204,9 +220,9 @@ void main() {
         pain(at(-3, 12), 3),
       ],
       days: [
-        FoodDay(date: d0, morning: const ['bread'], afternoon: const ['red_meat']),
-        FoodDay(date: at(2, 0), morning: const ['coffee']),
-        FoodDay(date: at(-5, 0), afternoon: const ['fish']),
+        FoodDay.withFoods(d0, {MealSlot.breakfast: const ['bread'], MealSlot.lunch: const ['red_meat']}),
+        FoodDay.withFoods(at(2, 0), {MealSlot.breakfast: const ['coffee']}),
+        FoodDay.withFoods(at(-5, 0), {MealSlot.lunch: const ['fish']}),
       ],
     );
     await pumpScreen(tester, controller, FoodPainScreen(date: d0));
@@ -248,10 +264,11 @@ void main() {
     expect(find.text('Food'), findsOneWidget);
     expect(find.text('Log'), findsOneWidget);
     expect(find.text('History'), findsOneWidget);
-    expect(find.text('Morning'), findsOneWidget);
-    expect(find.text('Afternoon'), findsOneWidget);
+    expect(find.text('Breakfast'), findsOneWidget);
+    expect(find.text('Lunch'), findsOneWidget);
+    expect(find.text('Complete HOPE'), findsOneWidget);
     expect(find.textContaining('Today ·'), findsOneWidget);
-    await tester.tap(morningField);
+    await tapField(tester, morningField);
     await settle(tester);
     await pickFood(tester, 'brea', 'Bread');
     await tester.tap(find.text('Done'));
@@ -269,11 +286,7 @@ void main() {
       final controller = await controllerWith(
         records: [pain(d0.add(const Duration(hours: 10)), 7), pain(now, 2)],
         days: [
-          FoodDay(
-            date: d0,
-            morning: const ['bread', 'coffee', 'dairy', 'fruit'],
-            afternoon: const ['vegetable_fat', 'animal_fat', 'ultra_processed'],
-          ),
+          FoodDay.withFoods(d0, {MealSlot.breakfast: const ['bread', 'coffee', 'dairy', 'fruit'], MealSlot.lunch: const ['vegetable_fat', 'animal_fat', 'ultra_processed']}),
         ],
       );
       await pumpScreen(tester, controller, const FoodScreen());
