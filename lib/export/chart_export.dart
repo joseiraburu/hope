@@ -369,8 +369,16 @@ String pdfSafe(String text) {
   };
   final b = StringBuffer();
   for (final r in text.runes) {
-    if (r == 0x2212) {
+    // La fuente estándar del PDF no dibuja guiones largos, comillas
+    // tipográficas ni puntos suspensivos (salían como un cuadradito).
+    if (r == 0x2212 || r == 0x2013 || r == 0x2014) {
       b.write('-');
+    } else if (r == 0x2026) {
+      b.write('...');
+    } else if (r == 0x2018 || r == 0x2019) {
+      b.write("'");
+    } else if (r == 0x201C || r == 0x201D) {
+      b.write('"');
     } else if (r == 0x00B5 || r == 0x03BC) {
       b.writeCharCode(0x00B5);
     } else if ((r >= 0x20 && r < 0x7F) || (r >= 0xA0 && r <= 0xFF) || extra.contains(r)) {

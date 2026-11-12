@@ -249,6 +249,7 @@ void main() {
   test('caracteres seguros para el PDF', () {
     expect(pdfSafe('−4 µg/h · ñ'), '-4 µg/h · ñ');
     expect(pdfSafe('≥ 5'), '? 5');
+    expect(pdfSafe('1 nov – 14 nov · Alcohol — mismo día… “sí”'), '1 nov - 14 nov · Alcohol - mismo día... "sí"');
   });
 
   test('el Excel tiene las cuatro hojas', () {
