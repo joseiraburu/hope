@@ -316,7 +316,14 @@ jobs:
 
   publicar:
     name: Publicar versión
-    if: startsWith(github.ref, 'refs/tags/v') || inputs.publicar
+    # Android y Windows son imprescindibles; iOS no: si GitHub no tiene un Mac
+    # libre y el trabajo de iOS se cancela, la versión se publica igual y el
+    # .ipa se añade en una compilación posterior (gh release upload --clobber).
+    if: >-
+      always() &&
+      needs.android.result == 'success' &&
+      needs.windows.result == 'success' &&
+      (startsWith(github.ref, 'refs/tags/v') || inputs.publicar)
     needs: [android, ios, windows]
     runs-on: ubuntu-latest
     steps:
