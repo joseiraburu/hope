@@ -312,6 +312,10 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(c.bowelEntries, isEmpty);
+      // El aviso sustituye al anterior: primero sale uno y luego entra el otro.
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 150));
+      }
       await tester.tap(find.text('Deshacer'));
       await tester.pump();
       expect(c.bowelEntries.length, 1);
