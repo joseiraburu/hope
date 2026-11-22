@@ -171,7 +171,10 @@ class _BowelChartPainter extends CustomPainter {
   void _label(Canvas canvas, String value, Offset at, Color color,
       {double size = 11, TextAlign align = TextAlign.left, FontWeight weight = FontWeight.w400}) {
     final tp = TextPainter(
-      text: TextSpan(text: value, style: TextStyle(color: color, fontSize: size, fontWeight: weight)),
+      text: TextSpan(
+        text: value,
+        style: TextStyle(color: color, fontSize: size, fontWeight: weight, fontFamily: 'Roboto'),
+      ),
       textDirection: TextDirection.ltr,
       textAlign: align,
     )..layout();

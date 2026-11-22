@@ -1064,8 +1064,8 @@ class S {
       ? _t({'es': 'Hoy: ninguna', 'en': 'Today: none'})
       : _t({'es': 'Hoy: $n', 'en': 'Today: $n'});
   String tileMedicationStatus(int active) => _t({
-        'es': active == 0 ? 'Ningún tratamiento en curso' : (active == 1 ? '1 en curso' : '$active en curso'),
-        'en': active == 0 ? 'No ongoing treatments' : '$active ongoing',
+        'es': active == 0 ? 'Ninguno en curso' : '$active en curso',
+        'en': active == 0 ? 'None ongoing' : '$active ongoing',
       });
   String get tileReportStatus => _t({'es': 'PDF para la consulta', 'en': 'PDF for your appointment'});
   String get tileChartsStatus => _t({'es': 'Dolor y deposiciones', 'en': 'Pain and bowel movements'});
