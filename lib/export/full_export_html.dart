@@ -74,8 +74,8 @@ String htmlEscape(String text) {
 }
 
 /// JSON listo para ir dentro de <script>: ningún «<» puede cerrar el bloque.
-/// Dentro de un JSON solo aparece en textos, donde «<» es equivalente.
-String _scriptSafeJson(String json) => json.replaceAll('<', r'<');
+/// Dentro de un JSON solo aparece en textos, donde «\u003c» es equivalente.
+String _scriptSafeJson(String json) => json.replaceAll('<', r'\u003c');
 
 const String _css = '''
 :root { color-scheme: light; }

@@ -287,8 +287,10 @@ void main() {
         BowelEntry(id: 'b1', dateTime: DateTime(now.year, now.month, now.day, 7, 15), quality: 2),
       ]);
       await pumpBowel(tester, c, const BowelScreen());
-      await tester.ensureVisible(find.text('07:15 · Heces duras / con esfuerzo'));
-      await tester.tap(find.text('07:15 · Heces duras / con esfuerzo'));
+      final list = find.byType(Scrollable).first;
+      const tile = '07:15 · Heces duras / con esfuerzo';
+      await tester.scrollUntilVisible(find.text(tile), 200, scrollable: list);
+      await tester.tap(find.text(tile));
       await tester.pump();
       expect(find.textContaining('Editando la deposición'), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('bowel-quality-3')));
@@ -302,7 +304,7 @@ void main() {
       expect(c.bowelEntries.single.id, 'b1');
       expect(find.text('Deposición actualizada'), findsOneWidget);
 
-      await tester.ensureVisible(find.byTooltip('Borrar').first);
+      await tester.scrollUntilVisible(find.byTooltip('Borrar'), 200, scrollable: list);
       await tester.tap(find.byTooltip('Borrar').first);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));

@@ -106,7 +106,7 @@ void main() {
       expect(data.bowel, isNull);
       expect(data.foodDays, isEmpty);
       // Con marca de orden de bytes y espacios delante.
-      expect(decodeExportFile('﻿  $v3'), isNotNull);
+      expect(decodeExportFile('\uFEFF  $v3'), isNotNull);
     });
 
     test('lo que no es de HOPE se rechaza sin cargar nada', () {
