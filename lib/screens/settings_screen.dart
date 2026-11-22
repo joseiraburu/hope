@@ -7,8 +7,11 @@ import '../core/version.dart';
 import '../export/backup_flow.dart';
 import '../state/app_controller.dart';
 import '../widgets/dialogs.dart';
+import '../widgets/home_action.dart';
 import '../widgets/logo.dart';
 import 'ai_settings_screen.dart';
+import 'bowel_screen.dart';
+import 'data_screen.dart';
 import 'food_screen.dart';
 import 'foods_screen.dart';
 import 'reminders_screen.dart';
@@ -62,7 +65,7 @@ class SettingsScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(s.settings)),
+      appBar: AppBar(title: Text(s.settings), actions: const [HomeAction()]),
       body: ListView(
         padding: const EdgeInsets.only(bottom: 32),
         children: [
@@ -130,6 +133,14 @@ class SettingsScreen extends StatelessWidget {
             onTap: () => Navigator.of(context)
                 .push(MaterialPageRoute<void>(builder: (_) => const SleepScreen())),
           ),
+          section(s.bowel),
+          ListTile(
+            leading: const Icon(Icons.wc),
+            title: Text(s.bowel),
+            subtitle: Text(s.bowelHelp),
+            onTap: () => Navigator.of(context)
+                .push(MaterialPageRoute<void>(builder: (_) => const BowelScreen())),
+          ),
           section(s.reminders),
           ListTile(
             leading: const Icon(Icons.notifications_active_outlined),
@@ -157,6 +168,13 @@ class SettingsScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(s.dataLocal),
+          ),
+          ListTile(
+            leading: const Icon(Icons.import_export),
+            title: Text(s.tileData),
+            subtitle: Text(s.tileDataStatus),
+            onTap: () => Navigator.of(context)
+                .push(MaterialPageRoute<void>(builder: (_) => const DataScreen())),
           ),
           ListTile(
             leading: const Icon(Icons.backup_outlined),

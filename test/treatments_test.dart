@@ -156,6 +156,7 @@ void main() {
     final c = await testController();
     await tester.pumpWidget(HopeApp(controller: c));
     await tester.pump(const Duration(milliseconds: 100));
+    await openPainScreen(tester);
     await tester.tap(find.byIcon(Icons.more_vert));
     await settle(tester);
     await tester.tap(find.text('Tratamientos').last);

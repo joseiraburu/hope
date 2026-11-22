@@ -10,13 +10,14 @@ import '../core/config.dart';
 import '../data/stores.dart';
 import '../l10n/strings.dart';
 import '../models/app_settings.dart';
+import '../models/bowel.dart';
 import '../models/food.dart';
 import '../models/pain_record.dart';
 import '../models/sleep.dart';
 import '../models/treatment.dart';
 
-/// Estado global: configuración, histórico, tratamientos, alimentación y
-/// preferencias.
+/// Estado global: configuración, histórico, tratamientos, alimentación,
+/// sueño, deposiciones y preferencias.
 class AppController extends ChangeNotifier {
   AppController({
     required this.config,
@@ -26,9 +27,11 @@ class AppController extends ChangeNotifier {
     TreatmentStore? treatmentStore,
     FoodStore? foodStore,
     SleepStore? sleepStore,
+    BowelStore? bowelStore,
   })  : treatmentStore = treatmentStore ?? MemoryTreatmentStore(),
         foodStore = foodStore ?? MemoryFoodStore(),
-        sleepStore = sleepStore ?? MemorySleepStore();
+        sleepStore = sleepStore ?? MemorySleepStore(),
+        bowelStore = bowelStore ?? MemoryBowelStore();
 
   final AppConfig config;
   final BodyGeometry geometry;
@@ -37,6 +40,7 @@ class AppController extends ChangeNotifier {
   final TreatmentStore treatmentStore;
   final FoodStore foodStore;
   final SleepStore sleepStore;
+  final BowelStore bowelStore;
 
   List<PainRecord> _records = [];
   AppSettings _settings = const AppSettings();
@@ -53,6 +57,9 @@ class AppController extends ChangeNotifier {
 
   /// Noches registradas, de la más reciente a la más antigua.
   List<SleepEntry> _sleep = [];
+
+  /// Deposiciones, de la más reciente a la más antigua.
+  List<BowelEntry> _bowel = [];
 
   AppSettings get settings => _settings;
 
@@ -76,6 +83,7 @@ class AppController extends ChangeNotifier {
     _foodEntries = [...food.foods];
     _foodDays = _uniqueDays(food.days);
     _sleep = _uniqueNights(await sleepStore.load());
+    _bowel = _uniqueBowel(await bowelStore.load());
   }
 
   void _sort() => _records.sort((a, b) => b.dateTime.compareTo(a.dateTime));
@@ -119,8 +127,8 @@ class AppController extends ChangeNotifier {
     return removed;
   }
 
-  /// Borra todos los registros, tratamientos, medicamentos añadidos y la
-  /// alimentación.
+  /// Borra todos los registros, tratamientos, medicamentos añadidos, la
+  /// alimentación, el sueño y las deposiciones.
   Future<void> deleteAll() async {
     _records = [];
     _treatments = [];
@@ -128,18 +136,21 @@ class AppController extends ChangeNotifier {
     _foodEntries = [];
     _foodDays = [];
     _sleep = [];
+    _bowel = [];
     notifyListeners();
     await recordStore.saveAll(_records);
     await _saveTreatments();
     await _saveFood();
     await sleepStore.saveAll(_sleep);
+    await bowelStore.saveAll(_bowel);
   }
 
   /// Sustituye todos los datos (al importar una copia de seguridad).
   ///
   /// Las copias anteriores a la versión 0.3 no tienen alimentación
-  /// ([foods] y [foodDays] nulos) y las anteriores a la 0.4 no tienen sueño
-  /// ([sleep] nulo): entonces se conserva lo que haya en el dispositivo.
+  /// ([foods] y [foodDays] nulos), las anteriores a la 0.4 no tienen sueño
+  /// ([sleep] nulo) y las anteriores a la 0.5 no tienen deposiciones
+  /// ([bowel] nulo): entonces se conserva lo que haya en el dispositivo.
   Future<void> replaceAll({
     required List<PainRecord> records,
     required List<Treatment> treatments,
@@ -148,6 +159,7 @@ class AppController extends ChangeNotifier {
     List<FoodDef>? foods,
     List<FoodDay>? foodDays,
     List<SleepEntry>? sleep,
+    List<BowelEntry>? bowel,
   }) async {
     _records = [...records];
     _sort();
@@ -161,11 +173,13 @@ class AppController extends ChangeNotifier {
       _foodDays = _uniqueDays(foodDays ?? const []);
     }
     if (sleep != null) _sleep = _uniqueNights(sleep);
+    if (bowel != null) _bowel = _uniqueBowel(bowel);
     notifyListeners();
     await recordStore.saveAll(_records);
     await _saveTreatments();
     if (hasFood) await _saveFood();
     if (sleep != null) await sleepStore.saveAll(_sleep);
+    if (bowel != null) await bowelStore.saveAll(_bowel);
     if (settings != null) await settingsStore.save(settings);
   }
 
@@ -560,6 +574,70 @@ class AppController extends ChangeNotifier {
     _sleep.sort((a, b) => b.date.compareTo(a.date));
     notifyListeners();
     await sleepStore.saveAll(_sleep);
+  }
+
+  // ----------------------------------------------------------- deposiciones
+  /// Una entrada por identificador (si hubiera dos, queda la última
+  /// guardada), de la más reciente a la más antigua.
+  static List<BowelEntry> _uniqueBowel(List<BowelEntry> entries) {
+    final byId = <String, BowelEntry>{};
+    for (final e in entries) {
+      final previous = byId[e.id];
+      final newer = previous == null ||
+          (e.updatedAt != null &&
+              (previous.updatedAt == null || !e.updatedAt!.isBefore(previous.updatedAt!)));
+      if (newer) byId[e.id] = e;
+    }
+    final list = byId.values.toList()..sort((a, b) => b.dateTime.compareTo(a.dateTime));
+    return list;
+  }
+
+  void _sortBowel() => _bowel.sort((a, b) => b.dateTime.compareTo(a.dateTime));
+
+  /// Deposiciones, de la más reciente a la más antigua.
+  List<BowelEntry> get bowelEntries => List.unmodifiable(_bowel);
+
+  /// Deposiciones de un día (de la más reciente a la más antigua).
+  List<BowelEntry> bowelOn(DateTime day) {
+    final key = dayKey(day);
+    return [for (final e in _bowel) if (e.dayKeyText == key) e];
+  }
+
+  BowelEntry? bowelById(String id) {
+    for (final e in _bowel) {
+      if (e.id == id) return e;
+    }
+    return null;
+  }
+
+  /// Guarda una deposición nueva o sustituye la que tenga el mismo
+  /// identificador.
+  Future<void> saveBowel(BowelEntry entry) async {
+    final clean = entry.copyWith(note: entry.note.trim(), updatedAt: DateTime.now());
+    _bowel.removeWhere((e) => e.id == clean.id);
+    _bowel.add(clean);
+    _sortBowel();
+    notifyListeners();
+    await bowelStore.saveAll(_bowel);
+  }
+
+  /// Borra una deposición y la devuelve (para poder deshacer).
+  Future<BowelEntry?> deleteBowel(String id) async {
+    final i = _bowel.indexWhere((e) => e.id == id);
+    if (i < 0) return null;
+    final removed = _bowel.removeAt(i);
+    notifyListeners();
+    await bowelStore.saveAll(_bowel);
+    return removed;
+  }
+
+  /// Vuelve a poner una deposición borrada tal como estaba.
+  Future<void> restoreBowel(BowelEntry entry) async {
+    _bowel.removeWhere((e) => e.id == entry.id);
+    _bowel.add(entry);
+    _sortBowel();
+    notifyListeners();
+    await bowelStore.saveAll(_bowel);
   }
 
   // ------------------------------------------------------- «Completa HOPE»

@@ -1,5 +1,37 @@
 # Cambios
 
+## 0.5.0
+
+### Novedades
+- **Pantalla de inicio con nueve cuadros** que ocupan toda la pantalla en una cuadrícula de 3 × 3, de izquierda a derecha y de arriba abajo: **Dolor, Alimentación, Sueño, Deposiciones, Medicación, Historial, Generar informe, Gráficos e Importar/Exportar**. Cada cuadro abre su sección y muestra una línea de estado si cabe (por ejemplo, «Sin evaluar hoy» o «Hoy: 2»). En Windows, las teclas 1 a 9 abren cada cuadro. Ajustes queda en el icono de la barra superior.
+- **Botón «Inicio»** (icono de casa) en todas las secciones para volver a los cuadros. Si una pantalla tiene cambios sin guardar, pregunta antes de descartarlos.
+- **Deposiciones** (cuadro, Ajustes o tecla D en Dolor): cada deposición con su **fecha y hora** (por defecto, la actual) y su **calidad de 1 a 5**, elegida con un solo toque: 1 estreñimiento total, 2 heces duras / con esfuerzo, 3 normal, 4 blandas y 5 diarrea líquida. Nota opcional. Lista de los últimos 30 días agrupada por día, con edición y borrado con deshacer. Puede haber varias el mismo día.
+- **Historial** de todo en pestañas: Dolor (el histórico de siempre), Deposiciones, Sueño, Alimentación y Medicación, con el filtro de fechas común.
+- **Gráficos** en dos pestañas: Dolor (la gráfica de siempre) y **Deposiciones**: calidad de cada deposición con la media del día y número de deposiciones por día, en 7, 14, 30 o 90 días, o en tabla.
+- **Informe completo** (Generar informe): nuevo apartado **Deposiciones** con el total, la media diaria, la calidad media, cuántas de cada calidad, los días sin ninguna y los días con deposiciones duras (1–2) o blandas/líquidas (4–5), y una conclusión descriptiva. Solo aparece si se registran deposiciones. También va en el PDF y, si está activado, en el resumen para la IA.
+- **Importar/Exportar**:
+  - **Exportar informe completo**: un solo archivo `Hope_informe_AAAA-MM-DD.html` con todos los datos de todas las fechas (dolor, deposiciones, sueño, alimentación y medicación) y el resumen de los últimos 30 días. Se abre en cualquier navegador y se puede imprimir o guardar en PDF, así que se puede enviar al médico tal cual. Lleva dentro la copia de seguridad completa, de modo que el mismo archivo se carga en otro dispositivo. Se comparte con la hoja del sistema (correo, WhatsApp…) o, en el ordenador, con «Guardar como…».
+  - **Importar**: acepta el informe `.html` y las copias `.json` de esta versión y de las anteriores. Comprueba el archivo antes de cargar nada, muestra lo que contiene y pregunta si **combinar** (añade lo nuevo sin duplicar) o **reemplazar** (con una confirmación más). Al terminar indica cuántos registros se han cargado.
+
+### Cambios
+- La app se abre en los cuadros; la antigua pantalla principal es ahora la sección **Dolor** (con los mismos controles, atajos y menú, que añade Deposiciones). La bienvenida de la primera vez aparece sobre los cuadros.
+- «Histórico» pasa a llamarse **«Historial»**.
+- «Evaluar el dolor» (tarjeta «Completa HOPE») abre la sección Dolor.
+- La copia de seguridad pasa al **formato 5**: incluye las deposiciones. Las copias anteriores se siguen importando y conservan las deposiciones del dispositivo.
+- «Borrar todos los datos» borra también las deposiciones.
+- El texto de «Qué se envía» del análisis con IA menciona el número y la calidad de las deposiciones.
+- La CI valida también el informe en HTML (`informe_completo.html`): que se lea como HTML y que su bloque de datos sea una copia de HOPE.
+
+### Datos
+- Nuevo archivo `hope_deposiciones.json` (`deposiciones`, con `id`, `fecha_hora`, `calidad` de 1 a 5, `nota` y `actualizado`). Los archivos de la 0.4 no cambian, así que no hace falta migrar nada: al instalar la 0.5 encima, todos los datos se conservan.
+- Copia de seguridad formato 5: clave `deposiciones`. El informe HTML lleva la misma copia en `<script type="application/json" id="hope-datos">`.
+
+### Decisiones tomadas
+- **Un único archivo para el médico y para otro dispositivo:** HTML, porque cualquier móvil u ordenador lo abre sin instalar nada y puede llevar los datos dentro sin que se vean. El PDF del informe de 7, 14 o 30 días sigue en «Generar informe».
+- **Combinar** nunca sobrescribe lo del dispositivo salvo que el archivo tenga una versión guardada más tarde: registros de dolor, tratamientos, medicamentos y alimentos con el mismo identificador se quedan como están; noches, días de comidas y deposiciones que estén en los dos se quedan con la versión más reciente. Los ajustes no cambian al combinar.
+- El apartado Deposiciones del informe no exige un mínimo de registros: describe lo que haya (con pocas deposiciones, eso ya es un dato). Si hay deposiciones de otras fechas pero ninguna en el periodo, muestra «Datos insuficientes».
+- Colores de la escala: marrones para las duras, verde para la normal y azules para las blandas y líquidas; el rojo sigue reservado para el dolor. El color siempre va con el número y el nombre.
+
 ## 0.4.0
 
 ### Novedades

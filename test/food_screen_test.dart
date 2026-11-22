@@ -100,15 +100,13 @@ Future<void> pickFood(WidgetTester tester, String query, String name) async {
 }
 
 void main() {
-  testWidgets('se abre desde Ajustes y registra el desayuno y la comida', (tester) async {
+  testWidgets('se abre desde el cuadro de inicio y registra el desayuno y la comida', (tester) async {
     await setScreen(tester, const Size(412, 915));
     final controller = await testController();
     await tester.pumpWidget(HopeApp(controller: controller));
     await tester.pump(const Duration(milliseconds: 100));
 
-    await tester.tap(find.byTooltip('Ajustes'));
-    await settle(tester);
-    await tester.tap(find.text('Alimentación'));
+    await tester.tap(find.byKey(const ValueKey('tile-food')));
     await settle(tester);
     expect(find.byType(FoodScreen), findsOneWidget);
     expect(find.textContaining('Hoy ·'), findsOneWidget);

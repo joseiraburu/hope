@@ -4,7 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-import 'screens/home_screen.dart';
+import 'screens/start_screen.dart';
 import 'state/app_controller.dart';
 import 'state/navigation.dart';
 import 'widgets/reminder_watcher.dart';
@@ -35,7 +35,7 @@ class HopeApp extends StatelessWidget {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          home: const HomeScreen(),
+          home: const StartScreen(),
           builder: (context, child) => ReminderWatcher(child: child ?? const SizedBox.shrink()),
         );
       }),

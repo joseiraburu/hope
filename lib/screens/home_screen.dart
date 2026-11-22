@@ -17,9 +17,11 @@ import '../state/pain_state.dart';
 import '../utils/format.dart';
 import '../widgets/body_figure.dart';
 import '../widgets/dialogs.dart';
+import '../widgets/home_action.dart';
 import '../widgets/logo.dart';
 import '../widgets/selector_sheets.dart';
 import '../widgets/vertical_control.dart';
+import 'bowel_screen.dart';
 import 'charts_screen.dart';
 import 'food_screen.dart';
 import 'history_screen.dart';
@@ -28,15 +30,20 @@ import 'settings_screen.dart';
 import 'sleep_screen.dart';
 import 'treatments_screen.dart';
 
-/// Pantalla principal: silueta animada y los cuatro controles.
+/// Sección Dolor: silueta animada y los cuatro controles. Se abre desde el
+/// cuadro «Dolor» de la pantalla de inicio.
 ///
 /// También sirve como editor de un registro existente ([editing]) o para
 /// añadir un registro atrasado ([backdatedAt]).
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, this.editing, this.backdatedAt});
+  const HomeScreen({super.key, this.editing, this.backdatedAt, this.startFrom});
 
   final PainRecord? editing;
   final DateTime? backdatedAt;
+
+  /// Registro del que se parte al abrir (al elegir «Usar como punto de
+  /// partida» en el Historial). Si es null, se parte del último registro.
+  final PainRecord? startFrom;
 
   bool get isEditor => editing != null || backdatedAt != null;
 
@@ -51,7 +58,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   BodyView _view = BodyView.front;
   DateTime _date = DateTime.now();
   Sex _editorSex = Sex.female;
-  bool _welcomeShown = false;
 
   /// Último registro creado desde esta pantalla (para no duplicarlo al compartir).
   PainRecord? _lastRecord;
@@ -67,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     )..repeat();
 
     final editing = widget.editing;
-    final source = editing ?? (widget.isEditor ? null : app.latest);
+    final source = editing ?? (widget.isEditor ? null : (widget.startFrom ?? app.latest));
     final state = source == null
         ? PainState(config: app.config)
         : PainState.fromRecord(app.config, source);
@@ -81,10 +87,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     state.addListener(_onStateChanged);
     _state = state;
     _scene = state.toScene();
-
-    if (!widget.isEditor && !app.settings.firstRunDone) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _showWelcome());
-    }
   }
 
   @override
@@ -164,6 +166,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SleepScreen()));
   }
 
+  void _openBowel() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BowelScreen()));
+  }
+
   void _openReport() {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ReportScreen()));
   }
@@ -206,54 +212,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     app.updateSettings(app.settings.copyWith(sex: sexToString(sex)));
   }
 
-  Future<void> _showWelcome() async {
-    if (!mounted || _welcomeShown) return;
-    _welcomeShown = true;
-    final app = AppScope.read(context);
-    final s = app.strings;
-    final chosen = await showDialog<Sex>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        icon: const HopeLogo(size: 56),
-        title: Text(s.welcomeTitle, textAlign: TextAlign.center),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(s.welcomeIntro),
-              const SizedBox(height: 12),
-              Text(s.medicalDisclaimer,
-                  style: const TextStyle(fontWeight: FontWeight.w600)),
-              const SizedBox(height: 12),
-              Text(s.photosensitivity),
-              const SizedBox(height: 16),
-              Text(s.chooseSilhouette),
-            ],
-          ),
-        ),
-        actionsAlignment: MainAxisAlignment.center,
-        actions: [
-          FilledButton.tonalIcon(
-            onPressed: () => Navigator.of(ctx).pop(Sex.female),
-            icon: const Icon(Icons.female),
-            label: Text(s.female),
-          ),
-          FilledButton.tonalIcon(
-            onPressed: () => Navigator.of(ctx).pop(Sex.male),
-            icon: const Icon(Icons.male),
-            label: Text(s.male),
-          ),
-        ],
-      ),
-    );
-    await app.updateSettings(app.settings.copyWith(
-      sex: sexToString(chosen ?? Sex.female),
-      firstRunDone: true,
-    ));
-  }
-
   static int _stepFrequency(int f, int direction) {
     final step = f < 50 ? 5 : (f < 100 ? 10 : 25);
     return f + direction * step;
@@ -276,6 +234,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               const SingleActivator(LogicalKeyboardKey.keyT): _openTreatments,
               const SingleActivator(LogicalKeyboardKey.keyA): _openFood,
               const SingleActivator(LogicalKeyboardKey.keyS): _openSleep,
+              const SingleActivator(LogicalKeyboardKey.keyD): _openBowel,
               const SingleActivator(LogicalKeyboardKey.keyI): _openReport,
             },
           },
@@ -373,10 +332,19 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         ),
       );
     }
+    final canGoHome = Navigator.of(context).canPop();
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 6, 4, 2),
+      padding: EdgeInsets.fromLTRB(canGoHome ? 2 : 14, 6, 4, 2),
       child: Row(
         children: [
+          if (canGoHome) ...[
+            IconButton(
+              tooltip: s.home,
+              icon: const Icon(Icons.home_outlined),
+              onPressed: () => goHome(context),
+            ),
+            const SizedBox(width: 2),
+          ],
           const HopeLogo(size: 34),
           const SizedBox(width: 10),
           Flexible(
@@ -398,6 +366,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             onSelected: (v) {
               if (v == 'food') _openFood();
               if (v == 'sleep') _openSleep();
+              if (v == 'bowel') _openBowel();
               if (v == 'report') _openReport();
               if (v == 'treatments') _openTreatments();
               if (v == 'settings') _openSettings();
@@ -411,6 +380,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               PopupMenuItem(
                 value: 'sleep',
                 child: ListTile(leading: const Icon(Icons.bedtime_outlined), title: Text(s.sleep)),
+              ),
+              PopupMenuItem(
+                value: 'bowel',
+                child: ListTile(leading: const Icon(Icons.wc), title: Text(s.bowel)),
               ),
               PopupMenuItem(
                 value: 'report',

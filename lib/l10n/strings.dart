@@ -5,6 +5,7 @@
 // Para añadir un idioma, añade su código a [S.supported] y una entrada con
 // ese código en cada texto. Los textos que falten se muestran en español.
 
+import '../data/merge.dart' show DataCounts;
 import '../models/food.dart' show MealSlot;
 
 /// Textos de la interfaz.
@@ -65,7 +66,7 @@ class S {
   String get perMinute => '/min';
   String get register => _t({'es': 'Registrar', 'en': 'Save entry'});
   String get share => _t({'es': 'Compartir', 'en': 'Share'});
-  String get history => _t({'es': 'Histórico', 'en': 'History'});
+  String get history => _t({'es': 'Historial', 'en': 'History'});
   String get charts => _t({'es': 'Gráficos', 'en': 'Charts'});
   String get treatments => _t({'es': 'Tratamientos', 'en': 'Treatments'});
   String get registered => _t({'es': 'Registrado', 'en': 'Entry saved'});
@@ -119,8 +120,8 @@ class S {
 
   // -------------------------------------------------------------- histórico
   String get historyEmpty => _t({
-        'es': 'Todavía no hay registros. Pulsa «Registrar» en la pantalla principal.',
-        'en': 'No entries yet. Press “Save entry” on the main screen.'
+        'es': 'Todavía no hay registros de dolor. Entra en «Dolor» y pulsa «Registrar».',
+        'en': 'No pain entries yet. Open “Pain” and press “Save entry”.'
       });
   String get filterDates => _t({'es': 'Filtrar por fechas', 'en': 'Filter by date'});
   String get clearFilter => _t({'es': 'Quitar filtro', 'en': 'Clear filter'});
@@ -158,8 +159,10 @@ class S {
   String get backup => _t({'es': 'Copia de seguridad', 'en': 'Backup'});
   String get backupExport => _t({'es': 'Exportar copia de seguridad', 'en': 'Export backup'});
   String get backupExportHelp => _t({
-        'es': 'Guarda en un archivo todos tus registros, tratamientos, alimentación, sueño y ajustes.',
-        'en': 'Saves all your entries, treatments, food log, sleep and settings to a file.'
+        'es': 'Guarda en un archivo (.json) todos tus registros, tratamientos, alimentación, sueño, '
+            'deposiciones y ajustes.',
+        'en': 'Saves all your entries, treatments, food log, sleep, bowel movements and settings '
+            'to a file (.json).'
       });
   String get backupImport => _t({'es': 'Importar copia de seguridad', 'en': 'Import backup'});
   String get backupImportQuestion => _t({
@@ -176,10 +179,10 @@ class S {
       });
   String get deleteAll => _t({'es': 'Borrar todos los datos', 'en': 'Delete all data'});
   String get deleteAllQuestion => _t({
-        'es': 'Se borrarán todos los registros, tratamientos, la alimentación y el sueño de '
-            'este dispositivo. No se puede deshacer.',
-        'en': 'All entries, treatments, the food log and sleep on this device will be '
-            'deleted. This cannot be undone.'
+        'es': 'Se borrarán todos los registros, tratamientos, la alimentación, el sueño y las '
+            'deposiciones de este dispositivo. No se puede deshacer.',
+        'en': 'All entries, treatments, the food log, sleep and bowel movements on this device '
+            'will be deleted. This cannot be undone.'
       });
   String get allDeleted => _t({'es': 'Se han borrado todos los datos', 'en': 'All data deleted'});
   String get dataLocal => _t({
@@ -860,12 +863,13 @@ class S {
   String get aiWhatIsSent => _t({'es': 'Qué se envía', 'en': 'What is sent'});
   String get aiWhatIsSentBody => _t({
         'es': 'Solo el resumen del informe con cifras agregadas del periodo: medias de dolor y '
-            'sueño, tendencias, número de días, tomas registradas y no realizadas, y los '
-            'alimentos con sus comparaciones. No se envían tu nombre, fechas, notas, zonas '
-            'del cuerpo ni tratamientos.',
+            'sueño, tendencias, número de días, tomas registradas y no realizadas, los '
+            'alimentos con sus comparaciones y el número y la calidad de las deposiciones. No '
+            'se envían tu nombre, fechas, notas, zonas del cuerpo ni tratamientos.',
         'en': 'Only the report summary with aggregated figures for the period: pain and sleep '
-            'averages, trends, number of days, logged and skipped meals, and the foods with '
-            'their comparisons. Your name, dates, notes, body areas and treatments are not sent.'
+            'averages, trends, number of days, logged and skipped meals, the foods with their '
+            'comparisons, and the number and quality of bowel movements. Your name, dates, '
+            'notes, body areas and treatments are not sent.'
       });
   String get aiPrivacyNotice => _t({
         'es': 'El servicio de IA es de terceros y tiene su propia política de privacidad. Son '
@@ -1041,4 +1045,268 @@ class S {
   String get groupedByWeek =>
       _t({'es': 'Agrupado por semanas (de lunes a domingo)', 'en': 'Grouped by week (Monday to Sunday)'});
   String get groupedByMonth => _t({'es': 'Agrupado por meses', 'en': 'Grouped by month'});
+
+  // --------------------------------------------------------- inicio (0.5)
+  String get home => _t({'es': 'Inicio', 'en': 'Home'});
+  String get tilePain => _t({'es': 'Dolor', 'en': 'Pain'});
+  String get tileMedication => _t({'es': 'Medicación', 'en': 'Medication'});
+  String get tileReport => _t({'es': 'Generar informe', 'en': 'Create report'});
+  String get tileData => _t({'es': 'Importar/Exportar', 'en': 'Import/Export'});
+  String tilePainStatus(int n) => n == 0
+      ? _t({'es': 'Sin evaluar hoy', 'en': 'Not rated today'})
+      : _t({'es': 'Hoy: ${nRecords(n)}', 'en': 'Today: ${nRecords(n)}'});
+  String tileFoodStatus(int meals) =>
+      _t({'es': 'Hoy: $meals de 5 tomas', 'en': 'Today: $meals of 5 meals'});
+  String tileSleepStatus(int? quality) => quality == null
+      ? _t({'es': 'Anoche: sin registrar', 'en': 'Last night: not logged'})
+      : _t({'es': 'Anoche: $quality/5', 'en': 'Last night: $quality/5'});
+  String tileBowelStatus(int n) => n == 0
+      ? _t({'es': 'Hoy: ninguna', 'en': 'Today: none'})
+      : _t({'es': 'Hoy: $n', 'en': 'Today: $n'});
+  String tileMedicationStatus(int active) => _t({
+        'es': active == 0 ? 'Ningún tratamiento en curso' : (active == 1 ? '1 en curso' : '$active en curso'),
+        'en': active == 0 ? 'No ongoing treatments' : '$active ongoing',
+      });
+  String get tileReportStatus => _t({'es': 'PDF para la consulta', 'en': 'PDF for your appointment'});
+  String get tileChartsStatus => _t({'es': 'Dolor y deposiciones', 'en': 'Pain and bowel movements'});
+  String get tileDataStatus =>
+      _t({'es': 'Informe completo y copia', 'en': 'Full report and backup'});
+  String get historyNothingInRange =>
+      _t({'es': 'No hay nada en esas fechas.', 'en': 'Nothing in that date range.'});
+
+  // ----------------------------------------------------------- deposiciones
+  String get bowel => _t({'es': 'Deposiciones', 'en': 'Bowel movements'});
+  String get bowelHelp => _t({
+        'es': 'Cada deposición con su hora y su calidad, de 1 (estreñimiento total) a 5 '
+            '(diarrea líquida).',
+        'en': 'Each bowel movement with its time and quality, from 1 (severe constipation) to 5 '
+            '(liquid diarrhoea).'
+      });
+  String bowelQualityName(int q) => switch (q) {
+        1 => _t({'es': 'Estreñimiento total', 'en': 'Severe constipation'}),
+        2 => _t({'es': 'Heces duras / con esfuerzo', 'en': 'Hard / straining'}),
+        3 => _t({'es': 'Normal', 'en': 'Normal'}),
+        4 => _t({'es': 'Blandas', 'en': 'Soft'}),
+        _ => _t({'es': 'Diarrea líquida', 'en': 'Liquid diarrhoea'}),
+      };
+  String bowelQualityValue(int q) => '$q · ${bowelQualityName(q)}';
+  String get bowelQuality => _t({'es': 'Calidad', 'en': 'Quality'});
+  String get bowelScaleHelp => _t({
+        'es': 'Toca una opción: 1 = estreñimiento total · 3 = normal · 5 = diarrea líquida',
+        'en': 'Tap one: 1 = severe constipation · 3 = normal · 5 = liquid diarrhoea'
+      });
+  String get bowelScaleText => [for (var q = 1; q <= 5; q++) '$q = ${bowelQualityName(q)}'].join(' · ');
+  String get chooseBowelQuality =>
+      _t({'es': 'Elige la calidad (1 a 5)', 'en': 'Choose the quality (1 to 5)'});
+  String get bowelWhen => _t({'es': 'Fecha y hora', 'en': 'Date and time'});
+  String get now => _t({'es': 'Ahora', 'en': 'Now'});
+  String get bowelNoteHint => _t({
+        'es': 'Por ejemplo: con molestias, con urgencia…',
+        'en': 'For example: discomfort, urgency…'
+      });
+  String get bowelSaved => _t({'es': 'Deposición guardada', 'en': 'Bowel movement saved'});
+  String get bowelUpdated => _t({'es': 'Deposición actualizada', 'en': 'Bowel movement updated'});
+  String get bowelDeleted => _t({'es': 'Deposición borrada', 'en': 'Bowel movement deleted'});
+  String get deleteBowelQuestion =>
+      _t({'es': '¿Borrar esta deposición?', 'en': 'Delete this bowel movement?'});
+  String bowelEditing(String when) =>
+      _t({'es': 'Editando la deposición del $when', 'en': 'Editing the bowel movement of $when'});
+  String get bowelNew => _t({'es': 'Nueva', 'en': 'New'});
+  String recentBowel(int days) => _t({
+        'es': 'Deposiciones de los últimos $days días',
+        'en': 'Bowel movements in the last $days days'
+      });
+  String get bowelEmpty => _t({
+        'es': 'Aún no has registrado ninguna deposición.',
+        'en': "You haven't logged any bowel movements yet."
+      });
+  String bowelNoneRecent(int days) => _t({
+        'es': 'Ninguna en los últimos $days días.',
+        'en': 'None in the last $days days.'
+      });
+  String bowelCount(int n) => _t({
+        'es': n == 1 ? '1 deposición' : '$n deposiciones',
+        'en': n == 1 ? '1 bowel movement' : '$n bowel movements',
+      });
+  String get bowelOlderInHistory => _t({
+        'es': 'Las anteriores están en Historial → Deposiciones.',
+        'en': 'Older ones are in History → Bowel movements.'
+      });
+
+  // Informe completo.
+  String get reportBowelTitle => _t({'es': 'Deposiciones', 'en': 'Bowel movements'});
+  String coverageBowel(int n, int days) => _t({
+        'es': 'Deposiciones: $n en $days ${days == 1 ? 'día' : 'días'}',
+        'en': 'Bowel movements: $n on $days ${days == 1 ? 'day' : 'days'}'
+      });
+  String reportBowelTotal(int n, String perDay) => _t({
+        'es': 'Total: ${bowelCount(n)} · media de $perDay al día',
+        'en': 'Total: ${bowelCount(n)} · average $perDay per day'
+      });
+  String reportBowelMean(String mean) => _t({
+        'es': 'Calidad media: $mean (1 = estreñimiento total, 3 = normal, 5 = diarrea líquida)',
+        'en': 'Average quality: $mean (1 = severe constipation, 3 = normal, 5 = liquid diarrhoea)'
+      });
+  String bowelDistribution(String text) =>
+      _t({'es': 'Deposiciones por calidad: $text', 'en': 'Bowel movements by quality: $text'});
+  String bowelDaysWithout(int n, int total) => _t({
+        'es': 'Días sin ninguna deposición registrada: $n de $total',
+        'en': 'Days with no bowel movement logged: $n of $total'
+      });
+  String bowelHardDays(int n) => _t({
+        'es': 'Días con alguna deposición dura (1–2): $n',
+        'en': 'Days with a hard bowel movement (1–2): $n'
+      });
+  String bowelLooseDays(int n) => _t({
+        'es': 'Días con alguna deposición blanda o líquida (4–5): $n',
+        'en': 'Days with a soft or liquid bowel movement (4–5): $n'
+      });
+  String get missingBowel => _t({
+        'es': 'No hay deposiciones registradas en este periodo.',
+        'en': 'No bowel movements logged in this period.'
+      });
+  String cBowel(int n, String perDay, String quality) => _t({
+        'es': 'Se han registrado ${bowelCount(n)} (media de $perDay al día); la calidad más '
+            'frecuente ha sido «$quality».',
+        'en': '${bowelCount(n)} were logged (average $perDay per day); the most frequent '
+            'quality was “$quality”.'
+      });
+
+  // Gráficos.
+  String get bowelChartTitle =>
+      _t({'es': 'Gráfica de deposiciones', 'en': 'Bowel movement chart'});
+  String get bowelChartQuality =>
+      _t({'es': 'Calidad (1–5) y media del día', 'en': 'Quality (1–5) and daily average'});
+  String get bowelChartCount => _t({'es': 'Deposiciones por día', 'en': 'Bowel movements per day'});
+  String get bowelChartCountShort => _t({'es': 'Nº', 'en': 'No.'});
+  String get bowelChartMeanShort => _t({'es': 'Calidad media', 'en': 'Average quality'});
+  String get bowelChartEntries => _t({'es': 'Deposiciones', 'en': 'Bowel movements'});
+  String get bowelChartEmpty => _t({
+        'es': 'No hay deposiciones en estas fechas.',
+        'en': 'No bowel movements in this date range.'
+      });
+  String bowelChartSummary(int total, int daysWith, int days, String perDay, String mean) => _t({
+        'es': '${bowelCount(total)} en $daysWith de $days días · $perDay al día · calidad media $mean',
+        'en': '${bowelCount(total)} on $daysWith of $days days · $perDay per day · average quality $mean'
+      });
+  String get viewChart => _t({'es': 'Gráfica', 'en': 'Chart'});
+
+  // ----------------------------------------------------- importar/exportar
+  String dataCounts(DataCounts c) => _t({
+        'es': 'Dolor: ${nRecords(c.pain)} · Deposiciones: ${c.bowel} · Sueño: ${c.sleep} '
+            '${c.sleep == 1 ? 'noche' : 'noches'} · Alimentación: ${c.foodDays} '
+            '${c.foodDays == 1 ? 'día' : 'días'} · Tratamientos: ${c.treatments}',
+        'en': 'Pain: ${nRecords(c.pain)} · Bowel movements: ${c.bowel} · Sleep: ${c.sleep} '
+            '${c.sleep == 1 ? 'night' : 'nights'} · Food: ${c.foodDays} '
+            '${c.foodDays == 1 ? 'day' : 'days'} · Treatments: ${c.treatments}',
+      });
+  String get onThisDevice => _t({'es': 'En este dispositivo', 'en': 'On this device'});
+  String get exportFullTitle => _t({'es': 'Exportar informe completo', 'en': 'Export full report'});
+  String get exportFullHelp => _t({
+        'es': 'Crea un solo archivo (.html) con todos tus datos de todas las fechas: dolor, '
+            'deposiciones, sueño, alimentación y medicación, con un resumen al principio. Tu '
+            'médico lo abre en cualquier navegador y lo puede imprimir; tú lo puedes cargar en '
+            'otro dispositivo con «Importar».',
+        'en': 'Creates a single file (.html) with all your data from every date: pain, bowel '
+            'movements, sleep, food and medication, with a summary at the top. Your doctor can '
+            'open it in any browser and print it; you can load it on another device with '
+            '“Import”.'
+      });
+  String get exportFullButton => _t({'es': 'Exportar y compartir', 'en': 'Export and share'});
+  String get importTitle => _t({'es': 'Importar', 'en': 'Import'});
+  String get importHelp => _t({
+        'es': 'Carga un archivo exportado por HOPE: el informe completo (.html) o una copia de '
+            'seguridad (.json), también de versiones anteriores. Antes de cargar nada se '
+            'comprueba el archivo y eliges si combinarlo con tus datos o reemplazarlos.',
+        'en': 'Loads a file exported by HOPE: the full report (.html) or a backup (.json), also '
+            'from earlier versions. The file is checked before anything is loaded, and you '
+            'choose whether to merge it with your data or replace it.'
+      });
+  String get importButton => _t({'es': 'Elegir archivo…', 'en': 'Choose file…'});
+  String get backupJsonButton => _t({'es': 'Copia de seguridad (.json)', 'en': 'Backup (.json)'});
+  String get exportPrivacy => _t({
+        'es': 'Son datos de salud. El archivo se crea en tu dispositivo y solo sale de él si tú lo '
+            'compartes o lo guardas en otro sitio.',
+        'en': 'This is health data. The file is created on your device and only leaves it if you '
+            'share it or save it somewhere else.'
+      });
+  String get importReadError => _t({
+        'es': 'No se ha podido leer el archivo. No se ha cargado nada.',
+        'en': 'The file could not be read. Nothing was loaded.'
+      });
+  String get importInvalid => _t({
+        'es': 'Ese archivo no es una exportación de HOPE o está dañado. No se ha cargado nada.',
+        'en': 'That file is not a HOPE export or it is damaged. Nothing was loaded.'
+      });
+  String get importChooseTitle =>
+      _t({'es': '¿Cómo quieres cargarlo?', 'en': 'How do you want to load it?'});
+  String importFileFrom(String version, String date) =>
+      _t({'es': 'Exportado con HOPE $version el $date', 'en': 'Exported with HOPE $version on $date'});
+  String importFileContains(String counts) =>
+      _t({'es': 'El archivo contiene: $counts', 'en': 'The file contains: $counts'});
+  String get importMerge => _t({'es': 'Combinar con mis datos', 'en': 'Merge with my data'});
+  String get importMergeHelp => _t({
+        'es': 'Añade lo que no esté en este dispositivo, sin duplicar. Lo que ya tienes se '
+            'conserva; si una noche, un día de comidas o una deposición está en los dos, queda '
+            'la versión guardada más recientemente. Tus ajustes no cambian.',
+        'en': 'Adds whatever is not on this device, without duplicates. What you already have '
+            'is kept; if a night, a day of meals or a bowel movement is in both, the most '
+            'recently saved version stays. Your settings do not change.'
+      });
+  String get importReplace => _t({'es': 'Reemplazar mis datos', 'en': 'Replace my data'});
+  String get importReplaceHelp => _t({
+        'es': 'Borra los datos de este dispositivo y los sustituye por los del archivo, ajustes '
+            'incluidos.',
+        'en': "Deletes this device's data and replaces it with the file's, settings included."
+      });
+  String get importReplaceConfirm => _t({
+        'es': 'Se borrarán los datos actuales de este dispositivo y se sustituirán por los del '
+            'archivo. No se puede deshacer. ¿Continuar?',
+        'en': "This device's current data will be deleted and replaced with the file's. This "
+            'cannot be undone. Continue?'
+      });
+  String get replaceLabel => _t({'es': 'Reemplazar', 'en': 'Replace'});
+  String get importDoneTitle => _t({'es': 'Importación terminada', 'en': 'Import finished'});
+  String importDoneReplace(String counts) =>
+      _t({'es': 'Datos cargados. $counts.', 'en': 'Data loaded. $counts.'});
+  String importDoneMerge(String added, int updated) => _t({
+        'es': 'Datos combinados. Nuevos: $added.'
+            '${updated > 0 ? ' Actualizados con la versión más reciente: $updated.' : ''}',
+        'en': 'Data merged. New: $added.'
+            '${updated > 0 ? ' Updated to the most recent version: $updated.' : ''}',
+      });
+  String get importNothingNew => _t({
+        'es': 'Datos combinados: no había nada nuevo en el archivo.',
+        'en': 'Data merged: there was nothing new in the file.'
+      });
+  String get importFailed => _t({
+        'es': 'No se ha podido completar la importación.',
+        'en': 'The import could not be completed.'
+      });
+
+  // Informe completo en HTML.
+  String get exportCompleteRecord => _t({
+        'es': 'Registro completo de todas las fechas, exportado desde HOPE.',
+        'en': 'Complete record of every date, exported from HOPE.'
+      });
+  String exportDataRange(String from, String to) =>
+      _t({'es': 'Datos del $from al $to', 'en': 'Data from $from to $to'});
+  String get exportContents => _t({'es': 'Contenido:', 'en': 'Contents:'});
+  String exportSummaryTitle(int days) =>
+      _t({'es': 'Resumen de los últimos $days días', 'en': 'Summary of the last $days days'});
+  String get exportPainTitle => _t({'es': 'Registros de dolor', 'en': 'Pain entries'});
+  String get exportSleepNote => _t({
+        'es': 'Calidad de 1 (muy malo) a 5 (muy bueno). Cada noche lleva la fecha del día en que '
+            'termina.',
+        'en': 'Quality from 1 (very poor) to 5 (very good). Each night is dated with the day it ends.'
+      });
+  String get exportNightPain => _t({'es': 'Dolor nocturno', 'en': 'Night pain'});
+  String get exportImportHelp => _t({
+        'es': 'Para cargar estos datos en otro dispositivo: abre HOPE, entra en «Importar/Exportar», '
+            'pulsa «Elegir archivo…» y selecciona este archivo. Los datos van dentro del archivo, '
+            'no se ven en pantalla.',
+        'en': 'To load this data on another device: open HOPE, go to “Import/Export”, press '
+            '“Choose file…” and select this file. The data is inside the file and is not shown '
+            'on screen.'
+      });
 }

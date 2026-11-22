@@ -211,6 +211,63 @@ def comprobar_videos(d):
             comprobar_mp4(d, v, True)
 
 
+def comprobar_html(d, nombre, contiene=()):
+    """Informe completo en HTML: se lee como HTML y lleva dentro la copia de
+    seguridad en JSON (bloque <script id="hope-datos">)."""
+    from html.parser import HTMLParser
+
+    p = os.path.join(d, nombre)
+    if not os.path.exists(p):
+        errores.append(f"falta {nombre}")
+        return
+
+    class Lector(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.en_datos = False
+            self.datos = ""
+            self.texto = []
+            self.tablas = 0
+
+        def handle_starttag(self, tag, attrs):
+            if tag == "script" and dict(attrs).get("id") == "hope-datos":
+                self.en_datos = True
+            if tag == "table":
+                self.tablas += 1
+
+        def handle_endtag(self, tag):
+            if tag == "script":
+                self.en_datos = False
+
+        def handle_data(self, data):
+            if self.en_datos:
+                self.datos += data
+            else:
+                self.texto.append(data)
+
+    with open(p, encoding="utf-8") as f:
+        html = f.read()
+    lector = Lector()
+    lector.feed(html)
+    if not lector.datos.strip():
+        errores.append(f"{nombre}: no lleva el bloque de datos hope-datos")
+        return
+    try:
+        datos = json.loads(lector.datos)
+    except ValueError as e:
+        errores.append(f"{nombre}: el bloque de datos no es JSON válido ({e})")
+        return
+    if datos.get("formato") != "hope-copia":
+        errores.append(f"{nombre}: el bloque de datos no es una copia de HOPE")
+    texto = " ".join(lector.texto)
+    for t in contiene:
+        if t not in texto:
+            errores.append(f"{nombre}: no contiene «{t}»")
+    notas.append(f"{nombre}: {mb(p):.2f} MB, {lector.tablas} tablas, copia formato "
+                 f"{datos.get('version')}, {len(datos.get('registros', []))} registros, "
+                 f"{len(datos.get('deposiciones', []))} deposiciones")
+
+
 def escapar(texto):
     return texto.replace("%", "%25").replace("\r", "").replace("\n", "%0A")
 
@@ -240,6 +297,9 @@ def main():
                        "no sustituye la valoración de un profesional sanitario"))
         comprobar_pdf(d, "informe_completo_insuficiente.pdf",
                       ("Informe completo", "Datos insuficientes"))
+        comprobar_html(d, "informe_completo.html",
+                       ("Informe completo", "Registros de dolor", "Deposiciones",
+                        "Diarrea líquida", "Importar/Exportar"))
     if notas:
         print("::notice title=Muestras::" + escapar("\n".join(notas)))
     if errores:

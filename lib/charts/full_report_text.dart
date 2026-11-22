@@ -75,12 +75,14 @@ class ReportWriter {
     return '${foodName(a.foodId)} — ${parts.join(' · ')}';
   }
 
-  /// Todos los apartados, en orden.
+  /// Todos los apartados, en orden. Las deposiciones solo aparecen si se
+  /// registran (si hay alguna, de cualquier fecha).
   List<ReportBlock> blocks() => [
         _coverage(),
         _pain(),
         _sleep(),
         _food(),
+        if (report.tracksBowel) _bowel(),
         _relations(),
       ];
 
@@ -94,6 +96,7 @@ class ReportWriter {
         s.coveragePain(r.painRecords, r.painDays),
         s.coverageSleep(r.sleepNights),
         s.coverageMeals(r.mealsEaten, r.mealsSkipped, r.foodDays),
+        if (r.tracksBowel) s.coverageBowel(r.bowelCount, r.bowelDays),
         s.coverageComplete(r.completeDays, r.periodDays, formatPct(pct, lang)),
       ],
     );
@@ -176,6 +179,31 @@ class ReportWriter {
     );
   }
 
+  ReportBlock _bowel() {
+    final b = report.bowel;
+    if (b == null) {
+      return ReportBlock(
+        title: s.reportBowelTitle,
+        insufficient: true,
+        missing: [s.missingBowel],
+      );
+    }
+    final distribution = [
+      for (var q = 1; q <= 5; q++) '${s.bowelQualityName(q)}: ${b.distribution[q - 1]}',
+    ].join(' · ');
+    return ReportBlock(
+      title: s.reportBowelTitle,
+      lines: [
+        s.reportBowelTotal(b.total, _n(b.perDay)),
+        s.reportBowelMean(_n(b.mean)),
+        s.bowelDistribution(distribution),
+        s.bowelDaysWithout(b.daysWithout, b.periodDays),
+        s.bowelHardDays(b.hardDays),
+        s.bowelLooseDays(b.looseDays),
+      ],
+    );
+  }
+
   ReportBlock _relations() {
     final rel = report.relations;
     final lines = <String>[s.relationsMetric];
@@ -249,6 +277,9 @@ class ReportWriter {
 
     final sl = r.sleep;
     if (sl != null) out.add(s.cSleepMean(_n(sl.mean)));
+
+    final bw = r.bowel;
+    if (bw != null) out.add(s.cBowel(bw.total, _n(bw.perDay), s.bowelQualityName(bw.mostCommon)));
 
     final rel = r.relations;
     final bg = rel.badVsGoodSleep;

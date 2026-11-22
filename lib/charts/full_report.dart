@@ -2,12 +2,14 @@
 // Copyright (C) 2026 joseiraburu y colaboradores. Licencia GPL-3.0-or-later.
 //
 // Informe completo: evolución del dolor en un periodo y su relación con el
-// sueño y la alimentación. Solo describe lo registrado: compara medias entre
-// grupos de días y no indica causas, diagnósticos ni tratamientos.
+// sueño y la alimentación, y las deposiciones. Solo describe lo registrado:
+// compara medias entre grupos de días y no indica causas, diagnósticos ni
+// tratamientos.
 
 import 'dart:math' as math;
 
 import '../core/config.dart';
+import '../models/bowel.dart';
 import '../models/food.dart';
 import '../models/pain_record.dart';
 import '../models/sleep.dart';
@@ -136,7 +138,14 @@ List<CountItem> _top(Map<String, int> counts, int max) {
 
 /// Lo registrado un día del periodo.
 class ReportDay {
-  ReportDay({required this.day, required this.index, required this.pain, this.food, this.sleep});
+  ReportDay({
+    required this.day,
+    required this.index,
+    required this.pain,
+    this.food,
+    this.sleep,
+    this.bowel = const [],
+  });
 
   /// Medianoche local.
   final DateTime day;
@@ -151,10 +160,13 @@ class ReportDay {
   /// La noche que termina este día.
   final SleepEntry? sleep;
 
+  /// Deposiciones del día.
+  final List<BowelEntry> bowel;
+
   /// Media del dolor de fondo del día (null si no hay registros).
   double? get painMean => pain.isEmpty ? null : _mean(pain.map((r) => r.painIntensity));
 
-  bool get hasAny => pain.isNotEmpty || food != null || sleep != null;
+  bool get hasAny => pain.isNotEmpty || food != null || sleep != null || bowel.isNotEmpty;
 
   /// Dolor, sueño y comidas registrados.
   bool get complete => pain.isNotEmpty && food != null && sleep != null;
@@ -247,6 +259,54 @@ class FoodSection {
   final List<CountItem> topFoods;
 }
 
+/// Deposiciones del periodo.
+class BowelSection {
+  const BowelSection({
+    required this.total,
+    required this.days,
+    required this.periodDays,
+    required this.mean,
+    required this.distribution,
+    required this.hardDays,
+    required this.looseDays,
+  });
+
+  /// Deposiciones registradas y días con alguna.
+  final int total;
+  final int days;
+  final int periodDays;
+
+  /// Calidad media (1 a 5).
+  final double mean;
+
+  /// Deposiciones con calidad 1, 2, 3, 4 y 5.
+  final List<int> distribution;
+
+  /// Días con alguna deposición dura (1–2) y con alguna blanda o líquida (4–5).
+  final int hardDays;
+  final int looseDays;
+
+  /// Media de deposiciones al día en todo el periodo.
+  double get perDay => periodDays == 0 ? 0 : total / periodDays;
+
+  /// Días del periodo sin ninguna deposición registrada.
+  int get daysWithout => periodDays - days;
+
+  /// Calidad más frecuente (la más cercana a 3 si hay empate).
+  int get mostCommon {
+    var best = bowelQualityNormal;
+    var bestCount = -1;
+    for (final q in const [3, 2, 4, 1, 5]) {
+      final n = distribution[q - 1];
+      if (n > bestCount) {
+        best = q;
+        bestCount = n;
+      }
+    }
+    return best;
+  }
+}
+
 /// Un alimento y el dolor de los días en que se tomó frente a los demás.
 class FoodAssociation {
   const FoodAssociation({required this.foodId, this.sameDay, this.nextDay});
@@ -321,6 +381,8 @@ class FullReport {
     required this.sleep,
     required this.food,
     required this.relations,
+    this.bowel,
+    this.tracksBowel = false,
   });
 
   /// Primer y último día (medianoche local).
@@ -335,6 +397,13 @@ class FullReport {
   final FoodSection? food;
   final RelationsSection relations;
 
+  /// Deposiciones del periodo (null si no hay ninguna).
+  final BowelSection? bowel;
+
+  /// El usuario registra deposiciones (hay alguna, de cualquier fecha). Si
+  /// no, el apartado no aparece en el informe.
+  final bool tracksBowel;
+
   int get daysWithAny => days.where((d) => d.hasAny).length;
   int get painDays => days.where((d) => d.pain.isNotEmpty).length;
   int get painRecords => days.fold(0, (n, d) => n + d.pain.length);
@@ -343,10 +412,17 @@ class FullReport {
   int get completeDays => days.where((d) => d.complete).length;
   int get mealsEaten => days.fold(0, (n, d) => n + (d.food?.eatenSlots.length ?? 0));
   int get mealsSkipped => days.fold(0, (n, d) => n + (d.food?.skippedSlots.length ?? 0));
+  int get bowelCount => days.fold(0, (n, d) => n + d.bowel.length);
+  int get bowelDays => days.where((d) => d.bowel.isNotEmpty).length;
 
   /// Ningún apartado tiene datos suficientes.
   bool get allInsufficient =>
-      pain == null && sleep == null && food == null && !relations.sleepEnough && !relations.foodEnough;
+      pain == null &&
+      sleep == null &&
+      food == null &&
+      bowel == null &&
+      !relations.sleepEnough &&
+      !relations.foodEnough;
 }
 
 /// Calcula el informe de los últimos [periodDays] días hasta hoy ([now]).
@@ -356,6 +432,7 @@ FullReport buildFullReport({
   required List<SleepEntry> sleep,
   required AppConfig config,
   required int periodDays,
+  List<BowelEntry> bowel = const [],
   DateTime? now,
 }) {
   final today = dayOf(now ?? DateTime.now());
@@ -365,6 +442,10 @@ FullReport buildFullReport({
   final painByKey = <String, List<PainRecord>>{};
   for (final r in records) {
     painByKey.putIfAbsent(dayKey(r.dateTime), () => []).add(r);
+  }
+  final bowelByKey = <String, List<BowelEntry>>{};
+  for (final e in bowel) {
+    bowelByKey.putIfAbsent(e.dayKeyText, () => []).add(e);
   }
   final days = <ReportDay>[];
   for (var i = 0; i < periodDays; i++) {
@@ -376,6 +457,7 @@ FullReport buildFullReport({
       pain: painByKey[key] ?? const [],
       food: foodByKey[key],
       sleep: sleepByKey[key],
+      bowel: bowelByKey[key] ?? const [],
     ));
   }
 
@@ -388,6 +470,26 @@ FullReport buildFullReport({
     sleep: _sleepSection(days, periodDays),
     food: _foodSection(days),
     relations: _relations(days),
+    bowel: _bowelSection(days, periodDays),
+    tracksBowel: bowel.isNotEmpty,
+  );
+}
+
+BowelSection? _bowelSection(List<ReportDay> days, int periodDays) {
+  final all = [for (final d in days) ...d.bowel];
+  if (all.isEmpty) return null;
+  final distribution = List<int>.filled(5, 0);
+  for (final e in all) {
+    distribution[e.quality - 1]++;
+  }
+  return BowelSection(
+    total: all.length,
+    days: days.where((d) => d.bowel.isNotEmpty).length,
+    periodDays: periodDays,
+    mean: _mean(all.map((e) => e.quality)),
+    distribution: distribution,
+    hardDays: days.where((d) => d.bowel.any((e) => e.quality <= 2)).length,
+    looseDays: days.where((d) => d.bowel.any((e) => e.quality >= 4)).length,
   );
 }
 

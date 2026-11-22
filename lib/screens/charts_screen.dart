@@ -21,20 +21,31 @@ import '../state/app_controller.dart';
 import '../state/pain_state.dart';
 import '../utils/format.dart';
 import '../widgets/body_figure.dart';
+import '../widgets/bowel_chart.dart';
 import '../widgets/compare_sheet.dart';
+import '../widgets/home_action.dart';
 import 'treatment_editor_screen.dart';
 
 enum _ExportKind { png, gif, xlsx, pdf }
 
-/// Gráfica de evolución con cursor, agrupación y tratamientos.
+/// Gráficos, en dos pestañas: la evolución del dolor (con cursor,
+/// agrupación y tratamientos) y las deposiciones.
 class ChartsScreen extends StatefulWidget {
-  const ChartsScreen({super.key});
+  const ChartsScreen({super.key, this.initialTab = 0});
+
+  /// 0 = Dolor, 1 = Deposiciones.
+  final int initialTab;
 
   @override
   State<ChartsScreen> createState() => _ChartsScreenState();
 }
 
-class _ChartsScreenState extends State<ChartsScreen> {
+class _ChartsScreenState extends State<ChartsScreen> with SingleTickerProviderStateMixin {
+  late final TabController _tabs = TabController(
+    length: 2,
+    vsync: this,
+    initialIndex: widget.initialTab.clamp(0, 1).toInt(),
+  )..addListener(_onTab);
   ChartRange _range = ChartRange.d30;
   DateTime? _customFrom;
   DateTime? _customTo;
@@ -46,8 +57,17 @@ class _ChartsScreenState extends State<ChartsScreen> {
   Timer? _player;
   final FocusNode _chartFocus = FocusNode(debugLabel: 'grafica');
 
+  void _onTab() {
+    if (_tabs.indexIsChanging) return;
+    _stop();
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
+    _tabs
+      ..removeListener(_onTab)
+      ..dispose();
     _player?.cancel();
     _chartFocus.dispose();
     super.dispose();
@@ -229,18 +249,26 @@ class _ChartsScreenState extends State<ChartsScreen> {
           ChartRange.custom => s.rangeCustom,
         };
 
+    final painTab = _tabs.index == 0;
     return Scaffold(
       appBar: AppBar(
         title: Text(s.charts),
+        bottom: TabBar(
+          controller: _tabs,
+          tabs: [
+            Tab(key: const ValueKey('charts-tab-pain'), text: s.seriesPain),
+            Tab(key: const ValueKey('charts-tab-bowel'), text: s.bowel),
+          ],
+        ),
         actions: [
-          IconButton(
+          if (painTab) IconButton(
             tooltip: s.addTreatment,
             icon: const Icon(Icons.medication_outlined),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const TreatmentEditorScreen()),
             ),
           ),
-          PopupMenuButton<_ExportKind>(
+          if (painTab) PopupMenuButton<_ExportKind>(
             tooltip: s.export,
             icon: const Icon(Icons.ios_share),
             onSelected: (k) => _export(k, data),
@@ -263,10 +291,11 @@ class _ChartsScreenState extends State<ChartsScreen> {
               ),
             ],
           ),
+          const HomeAction(),
         ],
       ),
       body: SafeArea(
-        child: LayoutBuilder(builder: (context, constraints) {
+        child: !painTab ? const BowelChartView() : LayoutBuilder(builder: (context, constraints) {
           final wide = constraints.maxWidth >= 900;
           final controls = _Controls(
             compact: !wide,

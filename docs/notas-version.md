@@ -1,14 +1,13 @@
-## Novedades de la versión 0.4
+## Novedades de la versión 0.5
 
-- **Cinco comidas al día:** desayuno, almuerzo, comida, merienda y cena, cada una con su lista desplegable de alimentos, su hora y la opción **«No realizada»**. Puedes añadir alimentos concretos a la lista.
-- **Sueño:** puntúa cada noche de 1 (muy malo) a 5 (muy bueno) e indica si dormiste con dolor o sin dolor.
-- **Recordatorios «Completa HOPE»:** hasta cinco avisos al día, a la hora de tus comidas. Al pulsarlo se abre esa toma, con lo que te falta por registrar hoy. Ajustes → Recordatorios.
-- **Informe completo:** evolución del dolor de los últimos 7, 14 o 30 días y su relación con el sueño y con lo que comes, para ver patrones. Si faltan registros, el informe indica **«Datos insuficientes»** y qué falta. Se guarda en PDF para llevarlo a la consulta.
-- **Análisis con IA (opcional):** desactivado por defecto. Si lo activas, se envía solo un resumen anónimo al servicio que elijas.
+- **Pantalla de inicio con nueve cuadros:** Dolor, Alimentación, Sueño, Deposiciones, Medicación, Historial, Generar informe, Gráficos e Importar/Exportar. Toca un cuadro para entrar; el botón con la casa te devuelve al inicio desde cualquier sección.
+- **Deposiciones:** registra cada una con su hora y su calidad, de 1 (estreñimiento total) a 5 (diarrea líquida), con un solo toque. Aparecen en el historial, en las gráficas y en el informe.
+- **Historial en pestañas:** dolor, deposiciones, sueño, alimentación y medicación en un mismo sitio.
+- **Importar/Exportar:** crea un único archivo con todo tu registro. Tu médico lo abre en cualquier navegador (y lo puede imprimir), y tú lo puedes cargar en otro dispositivo. Al importarlo eliges si combinarlo con tus datos o reemplazarlos.
 
-Incluye también todo lo de la versión 0.3: alimentación, relación de la comida con el dolor de los días siguientes y app para iPhone y iPad.
+Incluye también todo lo de la versión 0.4: cinco comidas al día, sueño, recordatorios «Completa HOPE», informe completo y análisis opcional con IA.
 
-**Si ya tenías HOPE:** instala la 0.4 encima. Tus registros se conservan (en Android, si el APK está firmado con la misma clave que el anterior). Lo que registraste en Alimentación como «Mañana» y «Tarde» aparece como desayuno y comida.
+**Si ya tenías HOPE:** instala la 0.5 encima. Tus registros se conservan (en Android, si el APK está firmado con la misma clave que el anterior). Las copias de seguridad de versiones anteriores se pueden seguir importando.
 
 ## Cómo instalar HOPE
 

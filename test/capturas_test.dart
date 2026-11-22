@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hope/app.dart';
 import 'package:hope/data/stores.dart';
 import 'package:hope/models/app_settings.dart';
+import 'package:hope/models/bowel.dart';
 import 'package:hope/models/food.dart';
 import 'package:hope/models/pain_record.dart';
 import 'package:hope/models/reminder.dart';
@@ -19,10 +20,13 @@ import 'package:hope/models/sleep.dart';
 import 'package:hope/models/treatment.dart';
 import 'package:hope/export/record_share.dart';
 import 'package:hope/screens/ai_settings_screen.dart';
+import 'package:hope/screens/bowel_screen.dart';
 import 'package:hope/screens/charts_screen.dart';
+import 'package:hope/screens/data_screen.dart';
 import 'package:hope/screens/food_pain_screen.dart';
 import 'package:hope/screens/food_screen.dart';
 import 'package:hope/screens/foods_screen.dart';
+import 'package:hope/screens/history_screen.dart';
 import 'package:hope/screens/home_screen.dart';
 import 'package:hope/screens/reminders_screen.dart';
 import 'package:hope/screens/report_screen.dart';
@@ -101,6 +105,9 @@ void main() {
       sampleRecord(at: DateTime(2026, 11, 1, 10)),
     ]);
     await tester.pumpWidget(shot(controller));
+    await tester.pump(const Duration(milliseconds: 300));
+    await capture(tester, '00_inicio_movil');
+    await openPainScreen(tester);
     await tester.pump(const Duration(milliseconds: 2300));
     await capture(tester, '01_principal_movil');
 
@@ -116,6 +123,7 @@ void main() {
     ]);
     await tester.pumpWidget(shot(controller));
     await tester.pump(const Duration(milliseconds: 300));
+    await openPainScreen(tester);
     await tester.tap(find.text('Zonas'));
     await settle(tester);
     await capture(tester, '03_hoja_zonas');
@@ -127,6 +135,8 @@ void main() {
       sampleRecord(at: DateTime(2026, 11, 1, 10), sex: 'male'),
     ], settings: const AppSettings(firstRunDone: true, language: 'es', sex: 'male'));
     await tester.pumpWidget(shot(controller));
+    await tester.pump(const Duration(milliseconds: 300));
+    await openPainScreen(tester);
     await tester.pump(const Duration(milliseconds: 1300));
     await capture(tester, '04_principal_360');
   });
@@ -137,6 +147,9 @@ void main() {
       sampleRecord(at: DateTime(2026, 11, 1, 10)),
     ]);
     await tester.pumpWidget(shot(controller));
+    await tester.pump(const Duration(milliseconds: 300));
+    await capture(tester, '00_inicio_escritorio');
+    await openPainScreen(tester);
     await tester.pump(const Duration(milliseconds: 2600));
     await capture(tester, '05_principal_escritorio');
   });
@@ -147,6 +160,7 @@ void main() {
     final controller = await testController(records: [record]);
     await tester.pumpWidget(shot(controller));
     await tester.pump(const Duration(milliseconds: 300));
+    await openPainScreen(tester);
     showRecordShareSheet(tester.element(find.byType(HomeScreen)), record);
     await settle(tester);
     await capture(tester, '06_compartir');
@@ -388,7 +402,19 @@ void main() {
     final records = <PainRecord>[];
     final days = <FoodDay>[];
     final nights = <SleepEntry>[];
+    final bowel = <BowelEntry>[];
     for (var ago = 29; ago >= 1 && !empty; ago--) {
+      // Una o dos deposiciones al día; algún día ninguna.
+      if (ago % 6 != 0) {
+        bowel.add(BowelEntry(
+          id: 'dep-$ago-a',
+          dateTime: day(ago, 9),
+          quality: ago % 7 == 0 ? 2 : (ago % 5 == 0 ? 4 : 3),
+        ));
+      }
+      if (ago % 4 == 2) {
+        bowel.add(BowelEntry(id: 'dep-$ago-b', dateTime: day(ago, 19), quality: ago % 8 == 2 ? 5 : 3));
+      }
       final alcohol = ago % 4 == 1;
       final quality = ago % 5 == 0 ? 2 : (ago % 3 == 0 ? 3 : 4);
       final value = 4 + (alcohol ? 2 : 0) + (quality <= 2 ? 2 : 0) - (ago < 10 ? 1 : 0);
@@ -424,10 +450,58 @@ void main() {
       treatmentStore: MemoryTreatmentStore(),
       foodStore: MemoryFoodStore(FoodData(days: days)),
       sleepStore: MemorySleepStore(nights),
+      bowelStore: MemoryBowelStore(bowel),
     );
     await c.init();
     return c;
   }
+
+  testWidgets('captura: inicio, deposiciones, historial e importar/exportar', (tester) async {
+    await setScreen(tester, const Size(393, 852));
+    final controller = await dailyController('es');
+    await tester.pumpWidget(shot(controller));
+    await tester.pump(const Duration(milliseconds: 300));
+    await capture(tester, '50_inicio_con_datos');
+
+    await tester.tap(find.byKey(const ValueKey('tile-bowel')));
+    await settle(tester);
+    expect(find.byType(BowelScreen), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('bowel-quality-3')));
+    await settle(tester);
+    await capture(tester, '51_deposiciones');
+    final nav = tester.state<NavigatorState>(find.byType(Navigator).first);
+    nav.pop();
+    await settle(tester);
+
+    nav.push(MaterialPageRoute(builder: (_) => const HistoryScreen(initialTab: HistoryTab.bowel)));
+    await settle(tester);
+    await capture(tester, '52_historial_deposiciones');
+    nav.pop();
+    await settle(tester);
+
+    nav.push(MaterialPageRoute(builder: (_) => const ChartsScreen(initialTab: 1)));
+    await settle(tester);
+    await capture(tester, '53_graficos_deposiciones');
+    await tester.tap(find.text('Tabla'));
+    await settle(tester);
+    await capture(tester, '54_graficos_deposiciones_tabla');
+    nav.pop();
+    await settle(tester);
+
+    nav.push(MaterialPageRoute(builder: (_) => const DataScreen()));
+    await settle(tester);
+    await capture(tester, '55_importar_exportar');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('captura: inicio en horizontal y en inglés', (tester) async {
+    await setScreen(tester, const Size(852, 393));
+    final controller = await dailyController('en');
+    await tester.pumpWidget(shot(controller));
+    await tester.pump(const Duration(milliseconds: 300));
+    await capture(tester, '56_inicio_horizontal_en');
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('captura: completa HOPE, sueño y recordatorios', (tester) async {
     await setScreen(tester, const Size(393, 852));

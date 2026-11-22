@@ -9,8 +9,10 @@ import '../state/food_draft.dart';
 import '../utils/format.dart';
 import '../widgets/dialogs.dart';
 import '../widgets/food_picker.dart';
+import '../widgets/home_action.dart';
 import 'food_day_screen.dart';
 import 'foods_screen.dart';
+import 'home_screen.dart';
 import 'sleep_screen.dart';
 
 /// Días que ofrece la lista desplegable (hoy y los anteriores).
@@ -19,10 +21,13 @@ const int foodDayChoices = 30;
 /// Pestaña Alimentación: registrar lo que se come en las cinco tomas del día
 /// (desayuno, almuerzo, comida, merienda y cena), e historial por días.
 class FoodScreen extends StatefulWidget {
-  const FoodScreen({super.key, this.initialTab = 0, this.initialSlot});
+  const FoodScreen({super.key, this.initialTab = 0, this.initialSlot, this.initialDay});
 
   /// 0 = Registrar, 1 = Historial.
   final int initialTab;
+
+  /// Día que se abre en Registrar (por defecto, hoy).
+  final DateTime? initialDay;
 
   /// Toma que se resalta al abrir (desde un recordatorio).
   final MealSlot? initialSlot;
@@ -49,8 +54,8 @@ class _FoodScreenState extends State<FoodScreen> with SingleTickerProviderStateM
     super.didChangeDependencies();
     if (_draft != null) return;
     final app = AppScope.read(context);
-    final today = dayOf(DateTime.now());
-    _draft = FoodDraft(today)..load(today, app.foodDayFor(today));
+    final start = dayOf(widget.initialDay ?? DateTime.now());
+    _draft = FoodDraft(start)..load(start, app.foodDayFor(start));
     final slot = widget.initialSlot;
     if (slot != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -66,12 +71,14 @@ class _FoodScreenState extends State<FoodScreen> with SingleTickerProviderStateM
     }
   }
 
-  /// Vuelve a la pantalla principal para evaluar el dolor.
+  /// Abre la sección Dolor para evaluarlo (desde la pantalla de inicio).
   Future<void> _ratePain() async {
     if (!await _confirmDiscard() || !mounted) return;
     _d.load(_d.day, AppScope.read(context).foodDayFor(_d.day));
     if (!mounted) return;
-    Navigator.of(context).popUntil((route) => route.isFirst);
+    Navigator.of(context)
+      ..popUntil((route) => route.isFirst)
+      ..push(MaterialPageRoute<void>(builder: (_) => const HomeScreen()));
   }
 
   void _openSleep() {
@@ -185,6 +192,7 @@ class _FoodScreenState extends State<FoodScreen> with SingleTickerProviderStateM
                 icon: const Icon(Icons.tune),
                 onPressed: _openFoods,
               ),
+              const HomeAction(),
             ],
             bottom: TabBar(
               controller: _tabs,

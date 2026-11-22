@@ -8,6 +8,7 @@ import '../models/sleep.dart';
 import '../state/app_controller.dart';
 import '../utils/format.dart';
 import '../widgets/dialogs.dart';
+import '../widgets/home_action.dart';
 
 /// Noches que ofrece la lista desplegable (la de hoy y las anteriores).
 const int sleepNightChoices = 30;
@@ -165,7 +166,7 @@ class _SleepScreenState extends State<SleepScreen> {
       canPop: !_dirty,
       onPopInvokedWithResult: (didPop, _) => _onBlockedPop(didPop),
       child: Scaffold(
-        appBar: AppBar(title: Text(s.sleep)),
+        appBar: AppBar(title: Text(s.sleep), actions: const [HomeAction()]),
         body: ListView(
           padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
           children: [

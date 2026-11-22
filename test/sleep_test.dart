@@ -102,7 +102,7 @@ void main() {
       settings: c.settings,
       sleep: c.sleepEntries,
     ));
-    expect((jsonDecode(text) as Map<String, dynamic>)['version'], 4);
+    expect((jsonDecode(text) as Map<String, dynamic>)['version'], 5);
     final back = decodeBackup(text)!;
     expect(back.sleep!.single.quality, 5);
 

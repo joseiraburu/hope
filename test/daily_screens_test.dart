@@ -11,10 +11,15 @@ import 'package:hope/models/food.dart';
 import 'package:hope/models/pain_record.dart';
 import 'package:hope/models/sleep.dart';
 import 'package:hope/screens/ai_settings_screen.dart';
+import 'package:hope/screens/bowel_screen.dart';
+import 'package:hope/screens/charts_screen.dart';
+import 'package:hope/screens/data_screen.dart';
 import 'package:hope/screens/food_screen.dart';
+import 'package:hope/screens/history_screen.dart';
 import 'package:hope/screens/reminders_screen.dart';
 import 'package:hope/screens/report_screen.dart';
 import 'package:hope/screens/sleep_screen.dart';
+import 'package:hope/screens/start_screen.dart';
 import 'package:hope/state/app_controller.dart';
 
 import 'helpers.dart';
@@ -214,11 +219,12 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('el menú de la pantalla principal abre Sueño e Informe completo', (tester) async {
+  testWidgets('el menú de la sección Dolor abre Sueño e Informe completo', (tester) async {
     await setScreen(tester, const Size(412, 915));
     final c = await dailyController(days: 2);
     await tester.pumpWidget(HopeApp(controller: c));
     await tester.pump(const Duration(milliseconds: 100));
+    await openPainScreen(tester);
     await tester.tap(find.byTooltip('Ajustes'));
     await settle(tester);
     await tester.tap(find.text('Informe completo'));
@@ -240,6 +246,12 @@ void main() {
         await setScreen(tester, size);
         final c = await dailyController(days: 30, language: language);
         for (final screen in const [
+          StartScreen(),
+          BowelScreen(),
+          DataScreen(),
+          HistoryScreen(initialTab: HistoryTab.bowel),
+          HistoryScreen(initialTab: HistoryTab.food),
+          ChartsScreen(initialTab: 1),
           SleepScreen(),
           FoodScreen(initialSlot: MealSlot.snack),
           RemindersScreen(),

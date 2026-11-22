@@ -10,6 +10,7 @@ import '../export/share_service.dart';
 import '../services/ai_analysis.dart';
 import '../state/app_controller.dart';
 import '../utils/format.dart';
+import '../widgets/home_action.dart';
 import 'ai_settings_screen.dart';
 
 /// Informe completo: evolución del dolor en 7, 14 o 30 días y su relación
@@ -42,6 +43,7 @@ class _ReportScreenState extends State<ReportScreen> {
           records: app.records,
           foodDays: app.foodDays,
           sleep: app.sleepEntries,
+          bowel: app.bowelEntries,
           config: app.config,
           periodDays: _days,
           now: widget.now,
@@ -129,6 +131,7 @@ class _ReportScreenState extends State<ReportScreen> {
             icon: const Icon(Icons.picture_as_pdf_outlined),
             onPressed: _exportPdf,
           ),
+          const HomeAction(),
         ],
       ),
       // En pantallas anchas el texto no ocupa todo el ancho, para leerlo mejor.

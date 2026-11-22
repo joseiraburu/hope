@@ -8,6 +8,7 @@ import '../state/app_controller.dart';
 import '../utils/format.dart';
 import '../widgets/compare_sheet.dart';
 import '../widgets/dialogs.dart';
+import '../widgets/home_action.dart';
 import 'medications_screen.dart';
 import 'treatment_editor_screen.dart';
 
@@ -81,6 +82,7 @@ class _TreatmentsScreenState extends State<TreatmentsScreen> {
               MaterialPageRoute(builder: (_) => const MedicationsScreen()),
             ),
           ),
+          const HomeAction(),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(

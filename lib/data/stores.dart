@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import '../models/app_settings.dart';
+import '../models/bowel.dart';
 import '../models/food.dart';
 import '../models/pain_record.dart';
 import '../models/sleep.dart';
@@ -58,7 +59,24 @@ abstract class SleepStore {
   Future<void> saveAll(List<SleepEntry> entries);
 }
 
+/// Almacén de las deposiciones (puede haber varias al día).
+abstract class BowelStore {
+  Future<List<BowelEntry>> load();
+  Future<void> saveAll(List<BowelEntry> entries);
+}
+
 /// Versiones en memoria (para pruebas).
+class MemoryBowelStore implements BowelStore {
+  MemoryBowelStore([List<BowelEntry>? initial]) : _entries = [...?initial];
+  List<BowelEntry> _entries;
+
+  @override
+  Future<List<BowelEntry>> load() async => [..._entries];
+
+  @override
+  Future<void> saveAll(List<BowelEntry> entries) async => _entries = [...entries];
+}
+
 class MemoryFoodStore implements FoodStore {
   MemoryFoodStore([this._data = const FoodData()]);
   FoodData _data;
@@ -319,6 +337,44 @@ class JsonFileSleepStore implements SleepStore {
       'formato': 'hope-sueno',
       'version': 1,
       'noches': [for (final e in entries) e.toJson()],
+    });
+    final next = _queue.then((_) => writeFileAtomic(file, text));
+    _queue = next.catchError((Object _) {});
+    return next;
+  }
+}
+
+/// Deposiciones guardadas en un archivo JSON local, aparte del resto de
+/// datos: añadir esta sección no toca los archivos de versiones anteriores.
+class JsonFileBowelStore implements BowelStore {
+  JsonFileBowelStore(this.directory);
+
+  final Directory directory;
+  Future<void> _queue = Future<void>.value();
+
+  File get file => File('${directory.path}${Platform.pathSeparator}hope_deposiciones.json');
+
+  @override
+  Future<List<BowelEntry>> load() async {
+    if (!await file.exists()) return [];
+    try {
+      final data = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+      return [
+        for (final e in (data['deposiciones'] as List<dynamic>? ?? const []))
+          BowelEntry.fromJson(e as Map<String, dynamic>)
+      ];
+    } catch (_) {
+      await _setAsideCorrupt(file);
+      return [];
+    }
+  }
+
+  @override
+  Future<void> saveAll(List<BowelEntry> entries) {
+    final text = const JsonEncoder.withIndent(' ').convert({
+      'formato': 'hope-deposiciones',
+      'version': 1,
+      'deposiciones': [for (final e in entries) e.toJson()],
     });
     final next = _queue.then((_) => writeFileAtomic(file, text));
     _queue = next.catchError((Object _) {});

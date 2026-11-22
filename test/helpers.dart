@@ -2,11 +2,14 @@
 
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:hope/core/body_geometry.dart';
 import 'package:hope/core/config.dart';
 import 'package:hope/data/stores.dart';
 import 'package:hope/models/app_settings.dart';
+import 'package:hope/models/bowel.dart';
 import 'package:hope/models/pain_record.dart';
 import 'package:hope/models/treatment.dart';
 import 'package:hope/state/app_controller.dart';
@@ -20,6 +23,7 @@ BodyGeometry loadGeometry() =>
 Future<AppController> testController({
   List<PainRecord>? records,
   List<Treatment>? treatments,
+  List<BowelEntry>? bowel,
   AppSettings settings = const AppSettings(firstRunDone: true, language: 'es'),
 }) async {
   final c = AppController(
@@ -28,9 +32,18 @@ Future<AppController> testController({
     recordStore: MemoryRecordStore(records),
     settingsStore: MemorySettingsStore(settings),
     treatmentStore: MemoryTreatmentStore(TreatmentData(treatments: treatments ?? const [])),
+    bowelStore: MemoryBowelStore(bowel),
   );
   await c.init();
   return c;
+}
+
+/// Desde la pantalla de inicio (los cuadros), entra en la sección Dolor.
+Future<void> openPainScreen(WidgetTester tester) async {
+  await tester.tap(find.byKey(const ValueKey('tile-pain')));
+  for (var i = 0; i < 6; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
 }
 
 /// Guarda un archivo generado en build/muestras para validarlo en la CI.

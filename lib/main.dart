@@ -39,6 +39,7 @@ Future<void> main() async {
     treatmentStore: JsonFileTreatmentStore(dir),
     foodStore: JsonFileFoodStore(dir),
     sleepStore: JsonFileSleepStore(dir),
+    bowelStore: JsonFileBowelStore(dir),
   );
   await controller.init();
   // Recordatorios «Completa HOPE»: se preparan (y se atiende el aviso que
